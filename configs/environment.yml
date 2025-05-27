@@ -1,10 +1,27 @@
-name: my_env_name
-channels:           # where conda will look for packages
-  - conda_forge
-  - defaults
+name: mlops_project
+channels:
+- conda-forge
+- defaults
 dependencies:
-  - python=3.13
-  - pip
-  - pip:
-      - argparse
-      - pykernel
+- python=3.10
+- __future__
+- argparse
+- joblib
+- logging
+- numpy
+- os
+- pandas
+- pathlib
+- pytest
+- python-dotenv
+- pyyaml
+- scikit-learn
+- sklearn
+- src
+- typing
+- yaml
+- pip:
+  - pytest-cov
+  - argparse
+  - pykernel
+  - flake8
