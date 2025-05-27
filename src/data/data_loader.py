@@ -1,22 +1,14 @@
-"""
-data_loader.py
-
-Modular data ingestion utility for CSV and Excel files.
-- Loads configuration from config.yaml
-- Supports robust error handling and logging (configured by main.py)
-- Designed for production and as a teaching example for MLOps best practices
-"""
-
 import os
 import logging
+from typing import Optional, Dict
+
 import pandas as pd
 import yaml
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
-def load_config(config_path: str = "config.yaml") -> dict:
+def load_config(config_path: str = "configs/config.yaml") -> Dict:
     """
     Load configuration settings from a YAML file.
 
@@ -31,9 +23,15 @@ def load_config(config_path: str = "config.yaml") -> dict:
         yaml.YAMLError: If the YAML is invalid
     """
     if not os.path.isfile(config_path):
+        logger.error(f"Config file not found: {config_path}")
         raise FileNotFoundError(f"Config file not found: {config_path}")
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
+
+    with open(config_path, "r", encoding="utf-8") as f:
+        try:
+            config = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            logger.exception(f"Failed to parse YAML config: {e}")
+            raise
     return config
 
 
@@ -65,32 +63,28 @@ def load_data(
         Exception: For other data loading errors
     """
     if not path:
-        logger.error("No data path specified in configuration.")
-        raise ValueError("No data path specified in configuration.")
+        logger.error("No data path specified.")
+        raise ValueError("No data path specified.")
 
     if not os.path.isfile(path):
-        logger.error(f"Data file does not exist: {path}")
+        logger.error(f"Data file not found: {path}")
         raise FileNotFoundError(f"Data file not found: {path}")
 
     try:
-        if file_type == "csv":
-            df = pd.read_csv(path, delimiter=delimiter,
-                             header=header, encoding=encoding)
-        elif file_type == "excel":
-            df = pd.read_excel(path, sheet_name=sheet_name,
-                               header=header, engine="openpyxl")
-            # Warn if user forgot to specify a sheet and got multiple sheets
+        if file_type.lower() == "csv":
+            df = pd.read_csv(path, delimiter=delimiter, header=header, encoding=encoding)
+        elif file_type.lower() == "excel":
+            df = pd.read_excel(path, sheet_name=sheet_name, header=header, engine="openpyxl")
             if isinstance(df, dict):
                 raise ValueError(
-                    "Multiple sheets detected in Excel file. Please specify"
-                    " a single 'sheet_name' in the configuration."
+                    "Multiple sheets detected in Excel file. "
+                    "Please specify a single 'sheet_name' in the configuration."
                 )
         else:
             logger.error(f"Unsupported file type: {file_type}")
             raise ValueError(f"Unsupported file type: {file_type}")
 
-        logger.info(
-            f"Loaded data from {path} ({file_type}), shape={df.shape}")
+        logger.info(f"Loaded data from {path} ({file_type}), shape={df.shape}")
         return df
 
     except Exception as e:
@@ -98,11 +92,10 @@ def load_data(
         raise
 
 
-def get_data(config_path: str = "config.yaml") -> pd.DataFrame:
+def get_data(config_path: str = "configs/config.yaml") -> pd.DataFrame:
     """
     Main entry point for loading data in MLOps pipelines.
 
-    This function:
     - Loads YAML configuration for data source settings
     - Loads and returns the data as a DataFrame
 
@@ -115,19 +108,20 @@ def get_data(config_path: str = "config.yaml") -> pd.DataFrame:
     config = load_config(config_path)
     data_cfg = config.get("data_source", {})
     path = data_cfg.get("path")
-    if not path:
-        logger.error("No data path specified in configuration.")
-        raise ValueError("No data path specified in configuration.")
+    file_type = data_cfg.get("type", "csv")
+    sheet_name = data_cfg.get("sheet_name")
+    delimiter = data_cfg.get("delimiter", ",")
+    header = data_cfg.get("header", 0)
+    encoding = data_cfg.get("encoding", "utf-8")
 
-    df = load_data(
+    return load_data(
         path=path,
-        file_type=data_cfg.get("type", "csv"),
-        sheet_name=data_cfg.get("sheet_name"),
-        delimiter=data_cfg.get("delimiter", ","),
-        header=data_cfg.get("header", 0),
-        encoding=data_cfg.get("encoding", "utf-8"),
+        file_type=file_type,
+        sheet_name=sheet_name,
+        delimiter=delimiter,
+        header=header,
+        encoding=encoding,
     )
-    return df
 
 
 if __name__ == "__main__":
