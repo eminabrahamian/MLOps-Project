@@ -17,10 +17,24 @@ data_split:
   random_state: 42
 
 model:
-  active: random_forest
-  random_forest:
-    save_path: models/random_forest.pkl
-    params:
-      n_estimators: 100
-      max_depth: 10
-      random_state: 42
+  type: "RandomForestClassifier"  # Type of model to use
+  params:
+    n_estimators: 100
+    max_depth: 10
+    random_state: 42
+  save_path: models/random_forest.pkl
+
+features:
+  # List all features used for prediction (matching actual column names in dataset)
+  feature_columns:
+    - "mean radius"
+    - "mean texture"
+    - "mean perimeter"
+    - "mean area"
+    - "mean smoothness"
+    - "mean compactness"
+    - "mean concavity"
+    - "mean concave points"
+    - "mean symmetry"
+    - "mean fractal dimension"
+  target_column: target  # The column containing the cancer diagnosis

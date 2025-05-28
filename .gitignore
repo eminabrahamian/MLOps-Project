@@ -1,1 +1,49 @@
-/.DS_Store
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# Environment
+.env
+.venv
+venv/
+ENV/
+
+# Logs
+logs/
+*.log
+
+# Model files
+*.pkl
+
+# Data
+*.csv
+*.xlsx
+*.xls
+
+# OS specific
+.DS_Store
+Thumbs.db

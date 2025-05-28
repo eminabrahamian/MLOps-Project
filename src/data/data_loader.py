@@ -71,6 +71,7 @@ def load_data(
         raise FileNotFoundError(f"Data file not found: {path}")
 
     try:
+        logger.info(f"Loading {file_type} file from {path}")
         if file_type.lower() == "csv":
             df = pd.read_csv(path, delimiter=delimiter, header=header, encoding=encoding)
         elif file_type.lower() == "excel":
@@ -105,15 +106,20 @@ def get_data(config_path: str = "configs/config.yaml") -> pd.DataFrame:
     Raises:
         Exception: Any error in the configuration or data loading process
     """
+    logger.info(f"Loading configuration from {config_path}")
     config = load_config(config_path)
     data_cfg = config.get("data_source", {})
+    
+    # Extract all parameters from config
     path = data_cfg.get("path")
-    file_type = data_cfg.get("type", "csv")
+    file_type = data_cfg.get("type", "csv").lower()  # Ensure lowercase
     sheet_name = data_cfg.get("sheet_name")
     delimiter = data_cfg.get("delimiter", ",")
     header = data_cfg.get("header", 0)
     encoding = data_cfg.get("encoding", "utf-8")
-
+    
+    logger.info(f"Data source configuration: type={file_type}, path={path}")
+    
     return load_data(
         path=path,
         file_type=file_type,
