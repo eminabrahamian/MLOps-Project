@@ -202,5 +202,4 @@ if __name__ == '__main__':
         model_path=args.model,
         output_path=args.output,
         return_proba=args.proba
-    )
-
+    ) 
