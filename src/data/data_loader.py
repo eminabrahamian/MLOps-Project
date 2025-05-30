@@ -1,142 +1,170 @@
-import os
-import logging
-from typing import Optional, Dict
+"""
+data_loader.py
 
+Supports CSV and Excel sources with header, sheet, and encoding options.
+Provides robust logging, error handling, and custom exceptions.
+"""
+
+import logging
+from pathlib import Path
 import pandas as pd
 import yaml
 
-logger = logging.getLogger(__name__)
+
+class DataLoaderError(Exception):
+    """Custom exception for data loading errors."""
+    pass
 
 
-def load_config(config_path: str = "configs/config.yaml") -> Dict:
+def load_config(config_path: Path = None) -> dict:
     """
-    Load configuration settings from a YAML file.
+    Load YAML configuration for data loading and logging.
 
-    Args:
-        config_path (str): Path to the YAML configuration file
+    Parameters:
+        config_path (Path, optional): Path to the YAML config file.
+            Defaults to project_root/configs/config.yaml.
 
     Returns:
-        dict: Configuration dictionary
+        dict: Parsed configuration.
 
     Raises:
-        FileNotFoundError: If the file does not exist
-        yaml.YAMLError: If the YAML is invalid
+        DataLoaderError: If file not found or invalid YAML.
     """
-    if not os.path.isfile(config_path):
-        logger.error(f"Config file not found: {config_path}")
-        raise FileNotFoundError(f"Config file not found: {config_path}")
+    if config_path is None:
+        config_path = (
+            Path(__file__).resolve()
+            .parents[2]  # project root
+            / "configs"
+            / "config.yaml"
+        )
 
-    with open(config_path, "r", encoding="utf-8") as f:
-        try:
-            config = yaml.safe_load(f)
-        except yaml.YAMLError as e:
-            logger.exception(f"Failed to parse YAML config: {e}")
-            raise
-    return config
-
-
-def load_data(
-    path: str,
-    file_type: str = "csv",
-    sheet_name: Optional[str] = None,
-    delimiter: str = ",",
-    header: int = 0,
-    encoding: str = "utf-8"
-) -> pd.DataFrame:
-    """
-    Load data from a CSV or Excel file with validation and logging.
-
-    Args:
-        path (str): Path to the data file
-        file_type (str): Either "csv" or "excel"
-        sheet_name (Optional[str]): Sheet name (for Excel files)
-        delimiter (str): Delimiter for CSV files
-        header (int): Row number for column headers
-        encoding (str): File encoding
-
-    Returns:
-        pd.DataFrame: Loaded data
-
-    Raises:
-        FileNotFoundError: If the data file does not exist
-        ValueError: For unsupported file types or missing parameters
-        Exception: For other data loading errors
-    """
-    if not path:
-        logger.error("No data path specified.")
-        raise ValueError("No data path specified.")
-
-    if not os.path.isfile(path):
-        logger.error(f"Data file not found: {path}")
-        raise FileNotFoundError(f"Data file not found: {path}")
+    if not config_path.is_file():
+        raise DataLoaderError("Config file not found: %s" % config_path)
 
     try:
-        logger.info(f"Loading {file_type} file from {path}")
-        if file_type.lower() == "csv":
-            df = pd.read_csv(path, delimiter=delimiter, header=header, encoding=encoding)
-        elif file_type.lower() == "excel":
-            df = pd.read_excel(path, sheet_name=sheet_name, header=header, engine="openpyxl")
-            if isinstance(df, dict):
-                raise ValueError(
-                    "Multiple sheets detected in Excel file. "
-                    "Please specify a single 'sheet_name' in the configuration."
-                )
-        else:
-            logger.error(f"Unsupported file type: {file_type}")
-            raise ValueError(f"Unsupported file type: {file_type}")
+        with config_path.open("r") as f:
+            return yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        raise DataLoaderError("Invalid YAML in config: %s" % e) from e
 
-        logger.info(f"Loaded data from {path} ({file_type}), shape={df.shape}")
+
+def setup_logger(cfg: dict) -> logging.Logger:
+    """
+    Configure root logger based on config.
+
+    Parameters:
+        cfg (dict): config["logging"] section with keys:
+            level, log_file, format, datefmt
+
+    Returns:
+        logging.Logger: Configured logger for this module.
+    """
+    level = getattr(logging, cfg.get("level", "INFO").upper(), logging.INFO)
+    log_file = cfg.get("log_file", "logs/main.log")
+    fmt = cfg.get(
+        "format",
+        "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    )
+    datefmt = cfg.get("datefmt", None)
+
+    # reset any existing handlers
+    for h in logging.root.handlers[:]:
+        logging.root.removeHandler(h)
+
+    logging.basicConfig(
+        level=level,
+        filename=log_file,
+        filemode="a",
+        format=fmt,
+        datefmt=datefmt
+    )
+
+    # console handler at WARNING level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.WARNING)
+    ch.setFormatter(logging.Formatter(fmt, datefmt=datefmt))
+    logging.getLogger().addHandler(ch)
+
+    return logging.getLogger(__name__)
+
+
+def load_data_source(ds_cfg: dict) -> pd.DataFrame:
+    """
+    Load data from configured source.
+
+    Parameters:
+        ds_cfg (dict): config["data_source"] with keys:
+            path, type, header, sheet_name (if excel), encoding
+
+    Returns:
+        pd.DataFrame: Loaded data.
+
+    Raises:
+        DataLoaderError: On missing file or read errors.
+    """
+    path = Path(ds_cfg["path"])
+    typ = ds_cfg.get("type", "csv").lower()
+    header = ds_cfg.get("header", 0)
+    encoding = ds_cfg.get("encoding", None)
+    logger = logging.getLogger(__name__)
+
+    if not path.is_file():
+        raise DataLoaderError("Data file not found: %s" % path)
+
+    try:
+        if typ == "csv":
+            logger.info("Reading CSV: %s", path)
+            df = pd.read_csv(path, header=header, encoding=encoding)
+        elif typ == "excel":
+            sheet = ds_cfg.get("sheet_name", 0)
+            logger.info("Reading Excel: %s (sheet=%s)", path, sheet)
+            df = pd.read_excel(path, sheet_name=sheet, header=header)
+        else:
+            raise DataLoaderError("Unsupported data type: %s" % typ)
+
+        logger.info(
+            "Loaded data; rows=%d, cols=%d", df.shape[0], df.shape[1]
+        )
         return df
 
     except Exception as e:
-        logger.exception(f"Failed to load data: {e}")
-        raise
+        raise DataLoaderError(
+            "Failed to load %s (%s): %s" % (typ.upper(), path, e)
+        ) from e
 
 
-def get_data(config_path: str = "configs/config.yaml") -> pd.DataFrame:
+def load_data() -> pd.DataFrame:
     """
-    Main entry point for loading data in MLOps pipelines.
-
-    - Loads YAML configuration for data source settings
-    - Loads and returns the data as a DataFrame
+    High-level entry point: load config, set up logging, load data.
 
     Returns:
-        pd.DataFrame: Loaded data for downstream processing
+        pd.DataFrame: Loaded and validated data.
 
     Raises:
-        Exception: Any error in the configuration or data loading process
+        DataLoaderError: On any configuration or loading failure.
     """
-    logger.info(f"Loading configuration from {config_path}")
-    config = load_config(config_path)
-    data_cfg = config.get("data_source", {})
-    
-    # Extract all parameters from config
-    path = data_cfg.get("path")
-    file_type = data_cfg.get("type", "csv").lower()  # Ensure lowercase
-    sheet_name = data_cfg.get("sheet_name")
-    delimiter = data_cfg.get("delimiter", ",")
-    header = data_cfg.get("header", 0)
-    encoding = data_cfg.get("encoding", "utf-8")
-    
-    logger.info(f"Data source configuration: type={file_type}, path={path}")
-    
-    return load_data(
-        path=path,
-        file_type=file_type,
-        sheet_name=sheet_name,
-        delimiter=delimiter,
-        header=header,
-        encoding=encoding,
-    )
+    # load config & logging
+    cfg = load_config()
+    logger = setup_logger(cfg["logging"])
+    logger.info("Configuration loaded")
+
+    # load the data
+    df = load_data_source(cfg["data_source"])
+
+    # basic validation
+    if df.empty:
+        logger.warning("Loaded DataFrame is empty")
+    else:
+        logger.info("Final data shape: %s", df.shape)
+
+    return df
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    )
     try:
-        df = get_data()
-        print(f"Data loaded successfully. Shape: {df.shape}")
+        df = load_data()
+        print("Data loaded successfully; shape=%s" % (df.shape,))
+    except DataLoaderError as e:
+        logging.error("DataLoaderError: %s", e)
     except Exception as e:
-        print(f"Failed to load data: {e}")
+        logging.exception("Unexpected error: %s", e)
