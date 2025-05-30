@@ -38,3 +38,138 @@ features:
     - "mean symmetry"
     - "mean fractal dimension"
   target_column: target  # The column containing the cancer diagnosis
+
+data_validation:
+  enabled: true
+  action_on_error: "raise"        # "raise" or "warn"
+  report_path: "logs/validation_report.json"
+  schema:
+    columns:
+      - name: "id"
+        dtype: "int"
+        required: true
+        min: 0
+      - name: "mean radius"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "mean texture"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "mean perimeter"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "mean area"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "mean smoothness"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "mean compactness"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "mean concavity"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "mean concave points"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "mean symmetry"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "mean fractal dimension"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "radius error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "texture error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "perimeter error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "area error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "smoothness error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "compactness error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "concavity error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "concave points error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "symmetry error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "fractal dimension error"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst radius"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst texture"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst perimeter"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst area"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst smoothness"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst compactness"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst concavity"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst concave points"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst symmetry"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "worst fractal dimension"
+        dtype: "float"
+        required: false
+        min: 0.0
+      - name: "target"
+        dtype: "int"
+        required: true
+        allowed_values: [0,1]
