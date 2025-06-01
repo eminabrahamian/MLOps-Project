@@ -188,7 +188,7 @@ tests/
 Run all tests with coverage:
 
 ```bash
-pytest --cov=src
+PYTHONPATH=$PWD pytest --cov=src
 ```
 
 Aim for **>90% coverage** across data loading, validation, preprocessing, model training, evaluation, and inference.
