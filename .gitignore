@@ -39,11 +39,6 @@ logs/
 # Model files
 *.pkl
 
-# Data
-*.csv
-*.xlsx
-*.xls
-
 # OS specific
 .DS_Store
 Thumbs.db
