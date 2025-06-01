@@ -23,6 +23,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.exceptions import NotFittedError
 
+logger = logging.getLogger(__name__)
+
 # Import local modules
 try:
     from src.data_load.data_loader import get_data
@@ -36,7 +38,6 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
 
 # Model registry mapping
 MODEL_REGISTRY = {

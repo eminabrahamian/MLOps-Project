@@ -5,7 +5,6 @@ import yaml
 
 from src.data.data_loader import load_data
 from src.data.data_validator import validate_data
-from src.features.features import create_features       # we don't have a unifying feature engineering function
 from src.data.preprocessing import run_preprocessing_pipeline
 from src.models.model import train_model
 from src.inference.inference import run_inference
@@ -28,6 +27,7 @@ def load_config(config_path: str):
 
 def run_pipeline(config, stage, input_csv=None, output_csv=None):
     data = None
+    model_path = config.get('model', {}).get('model_path', 'model.pkl')
 
     if stage in ['all', 'validate']:
         data = load_data()
@@ -51,7 +51,6 @@ def run_pipeline(config, stage, input_csv=None, output_csv=None):
     if stage == 'infer':
         if not input_csv or not output_csv:
             raise ValueError("Inference stage requires input_csv and output_csv arguments.")
-            model_path = config.get('model', {}).get('model_path', 'model.pkl')
         run_inference(config, input_csv, model_path, output_csv)
 
 
