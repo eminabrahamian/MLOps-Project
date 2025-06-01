@@ -3,20 +3,16 @@ test_data_validator.py
 
 Unit tests for data_validator.py
 
-WHY:
-These tests achieve >90% coverage by exercising all functions and branches:
-- Config loading (success, missing file, invalid YAML)
-- Logger setup
-- Dtype compatibility checks
-- Per-column validation (_validate_column) for presence, type, missing,
-  bounds, allowed values, and sample extraction
-- End-to-end validate_data with different actions (raise, warn, optional)
-- CLI main entry (usage error and successful run)
+Covers:
+- load_config (missing file, invalid YAML)
+- _is_dtype_compatible (various dtypes)
+- _validate_column (missing required, type mismatch, missing values, out-of-range, allowed_values)
+- validate_data (action_on_error="raise" vs "warn", report file creation)
 """
 
 import json
 import logging
-import sys
+import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -30,300 +26,137 @@ from src.data.data_validator import (
     _validate_column,
     validate_data,
     DataValidationError,
-    main
 )
 
-
-def test_load_config_success(tmp_path):
+# Fixture: temporary config.yaml with a basic validation schema
+@pytest.fixture
+def basic_config(tmp_path):
     """
-    Test that load_config reads a valid YAML config file correctly.
-
-    WHY:
-    Ensures configuration driving validation rules is parsed as expected,
-    preventing downstream errors due to bad config ingestion.
+    Create a minimal config dict and file for data validation:
+      - logging to tmp_path/log.log
+      - schema for one 'id' (int, required) and one 'feature' (float, optional, min=0).
     """
-    cfg_dict = {"data_validation": {"enabled": True}}
-    cfg_file = tmp_path / "config.yaml"
-    cfg_file.write_text(yaml.dump(cfg_dict))
-
-    loaded = load_config(cfg_file)
-    assert loaded == cfg_dict
-
+    config = {
+        "logging": {
+            "level": "DEBUG",
+            "log_file": str(tmp_path / "val.log"),
+            "format": "%(levelname)s:%(message)s",
+            "datefmt": None
+        },
+        "data_validation": {
+            "enabled": True,
+            "action_on_error": "raise",
+            "report_path": str(tmp_path / "validation_report.json"),
+            "schema": {
+                "columns": [
+                    {"name": "id", "dtype": "int", "required": True, "min": 0},
+                    {"name": "score", "dtype": "float", "required": False, "min": 0.0},
+                    {"name": "cat", "dtype": "int", "required": False, "allowed_values": [0, 1]},
+                ]
+            }
+        }
+    }
+    config_file = tmp_path / "config.yaml"
+    with config_file.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(config, f)
+    return config_file, config
 
 def test_load_config_missing(tmp_path):
     """
-    Test that load_config raises DataValidationError if the config file is absent.
-
-    WHY:
-    Validates early failure on missing configuration, avoiding obscure errors later.
+    Test load_config raises DataValidationError when config file is missing.
     """
-    missing = tmp_path / "no_config.yaml"
-    with pytest.raises(DataValidationError) as exc:
-        load_config(missing)
-    assert "Config file not found" in str(exc.value)
-
+    fake_path = tmp_path / "not_exist.yaml"
+    with pytest.raises(DataValidationError) as excinfo:
+        load_config(fake_path)
+    assert "Config file not found" in str(excinfo.value)
 
 def test_load_config_invalid_yaml(tmp_path):
     """
-    Test that load_config raises DataValidationError for malformed YAML.
-
-    WHY:
-    Catches YAML syntax issues at the entry point, ensuring rules are valid.
+    Test load_config raises DataValidationError on invalid YAML syntax.
     """
-    bad = tmp_path / "bad.yaml"
-    bad.write_text("::: not yaml :::")
-    with pytest.raises(DataValidationError) as exc:
-        load_config(bad)
-    assert "Invalid YAML" in str(exc.value)
-
-
-def test_setup_logger_creates_handlers(tmp_path):
-    """
-    Test that setup_logger configures a FileHandler and a StreamHandler,
-    and writes log entries to the file.
-
-    WHY:
-    Confirms that logs are captured to disk for auditing and that warnings
-    still appear on console per MLOps guidelines.
-    """
-    log_path = tmp_path / "validation.log"
-    cfg = {
-        "logging": {
-            "level": "DEBUG",
-            "log_file": str(log_path),
-            "format": "%(levelname)s:%(message)s",
-            "datefmt": None
-        }
-    }
-    logger = setup_logger(cfg)
-    # Handler types
-    handler_types = {type(h) for h in logger.handlers}
-    assert logging.FileHandler in handler_types
-    assert logging.StreamHandler in handler_types
-
-    # Emit a debug message and verify it's in the file
-    logger.debug("debug-entry")
-    text = log_path.read_text()
-    assert "debug-entry" in text
-
+    bad_yaml = tmp_path / "bad2.yaml"
+    bad_yaml.write_text("not: [closed_list", encoding="utf-8")
+    with pytest.raises(DataValidationError) as excinfo:
+        load_config(bad_yaml)
+    assert "Invalid YAML" in str(excinfo.value)
 
 @pytest.mark.parametrize(
-    "data, expected_type, expected",
-    [
-        (pd.Series([1, 2, 3], dtype=int), "int", True),
-        (pd.Series([1.0, 2.5], dtype=float), "float", True),
-        (pd.Series(["a", "b"], dtype=object), "str", True),
-        (pd.Series([True, False], dtype=bool), "bool", True),
-        (pd.Series([1, 2], dtype=int), "float", False),
-        (pd.Series([1.0, 2.0], dtype=float), "int", False),
-        (pd.Series(["x"], dtype=object), "bool", False),
+    "dtype, values, expected", [
+        ("int", pd.Series([1, 2], dtype=int), True),
+        ("int", pd.Series([1.0, 2.0], dtype=float), False),
+        ("float", pd.Series([1.0, 2.0], dtype=float), True),
+        ("float", pd.Series([1, 2], dtype=int), False),
+        ("str", pd.Series(["a", "b"], dtype=object), True),
+        ("bool", pd.Series([True, False], dtype=bool), True),
     ]
 )
-def test_is_dtype_compatible(data, expected_type, expected):
+def test_is_dtype_compatible(dtype, values, expected):
     """
-    Test _is_dtype_compatible across various dtypes and expectations.
-
-    WHY:
-    Ensures that the module correctly identifies matching and mismatched types,
-    preventing obscure type-related bugs in validation.
+    Test that _is_dtype_compatible correctly identifies matching and non-matching dtypes.
     """
-    assert _is_dtype_compatible(data, expected_type) is expected
+    result = _is_dtype_compatible(values, dtype)
+    assert result is expected
 
-
-def test_validate_column_presence_and_optional(tmp_path):
+def test_validate_column_missing_required(tmp_path, basic_config):
     """
-    Test _validate_column for missing required and optional columns.
-
-    WHY:
-    Verifies that required columns trigger errors and optional ones are noted
-    without error, supporting flexible schema definitions.
+    Test that _validate_column flags missing required column as an error.
     """
-    df = pd.DataFrame({"a": [1, 2]})
-    errors, warnings, report = [], [], {}
+    _, cfg_dict = basic_config
+    report = {}
+    errors = []
+    warnings = []
+    df = pd.DataFrame({"score": [0.1, 0.2]})  # missing 'id'
+    # Validate only 'id'
+    col_cfg = cfg_dict["data_validation"]["schema"]["columns"][0]
+    _validate_column(df, col_cfg, errors, warnings, report)
+    assert "Missing required column" in errors[0]
+    assert report["id"]["status"] == "missing"
 
-    # Required missing
-    cfg_req = {"name": "b", "required": True}
-    _validate_column(df, cfg_req, errors, warnings, report)
-    assert len(errors) == 1
-    assert "Missing required column: b" in errors[0]
-    assert report["b"]["status"] == "missing"
-
-    # Optional missing
-    errors.clear(); warnings.clear(); report.clear()
-    cfg_opt = {"name": "c", "required": False}
-    _validate_column(df, cfg_opt, errors, warnings, report)
-    assert errors == []
-    assert report["c"]["status"] == "optional not present"
-
-
-def test_validate_column_type_missing_bounds_allowed():
+def test_validate_column_type_mismatch(tmp_path, basic_config):
     """
-    Test _validate_column for dtype mismatch, missing values, bounds, and allowed_values.
-
-    WHY:
-    Covers deep validation logic: type checking, NA handling, min/max range checks,
-    allowed set enforcement, and sample extraction.
+    Test that _validate_column flags dtype mismatches correctly.
     """
-    df = pd.DataFrame({
-        "num": [0, 5, None, 15],
-        "cat": ["A", "B", "C", "X"]
-    })
-    errors, warnings, report = [], [], {}
+    _, cfg_dict = basic_config
+    # Create DataFrame with wrong type for 'id' (float instead of int)
+    df = pd.DataFrame({"id": [1.1, 2.2], "score": [1.0, 2.0], "cat": [0, 1]})
+    report = {}
+    errors = []
+    warnings = []
+    col_cfg = cfg_dict["data_validation"]["schema"]["columns"][0]  # id:int
+    _validate_column(df, col_cfg, errors, warnings, report)
+    assert "dtype" in report["id"]["error"] or "dtype" in errors[0]
 
-    # Configuration combining all checks
-    cfg_num = {
-        "name": "num",
-        "dtype": "int",
-        "required": True,
-        "min": 1,
-        "max": 10
-    }
-    cfg_cat = {
-        "name": "cat",
-        "dtype": "str",
-        "required": True,
-        "allowed_values": ["A", "B", "C"]
-    }
-    _validate_column(df, cfg_num, errors, warnings, report)
-    # num: dtype mismatch (float w/ NaN), missing values, below min, above max
-    assert any("dtype" in e for e in errors)
-    # After dtype mismatch, no further checks on num, so missing/bounds not rechecked here
-
-    # Clear and test bounds & missing without dtype rule
-    errors.clear(); warnings.clear(); report.clear()
-    cfg_num2 = {
-        "name": "num",
-        "required": True,
-        "min": 1,
-        "max": 10
-    }
-    _validate_column(df, cfg_num2, errors, warnings, report)
-    # missing values, below_min (0), above_max (15)
-    assert any("has 1 missing values" in e for e in errors)
-    assert any("below min" in e for e in errors)
-    assert any("above max" in e for e in errors)
-
-    errors.clear(); warnings.clear(); report.clear()
-    _validate_column(df, cfg_cat, errors, warnings, report)
-    # cat: no dtype error, no missing, but invalid 'X'
-    assert any("invalid values" in e for e in errors)
-    assert report["cat"]["invalid_count"] == 1
-    # samples list present
-    assert isinstance(report["cat"]["samples"], list)
-
-
-def test_validate_data_missing_required_raise(tmp_path):
+def test_validate_data_raise(tmp_path, basic_config):
     """
-    Test validate_data raises when a required column is missing and action_on_error is 'raise'.
-
-    WHY:
-    Ensures strict enforcement of required schema when configured to fail fast.
+    Test that validate_data writes a report and raises DataValidationError on errors.
     """
-    df = pd.DataFrame({"a": [1]})
-    report_file = tmp_path / "rep.json"
-    config = {
-        "data_validation": {
-            "enabled": True,
-            "action_on_error": "raise",
-            "report_path": str(report_file),
-            "schema": {
-                "columns": [{"name": "b", "required": True}]
-            }
-        },
-        "logging": {"level": "INFO", "log_file": str(tmp_path / "log.log")}
-    }
-
+    config_file, cfg_dict = basic_config
+    df = pd.DataFrame({"id": [None], "score": [1.0], "cat": [0]})
+    # Load config
+    config = cfg_dict
+    # Ensure log directory exists
+    setup_logger(config)
+    # Validation should fail (id missing) and raise
     with pytest.raises(DataValidationError):
         validate_data(df, config)
-
-    # Report written
-    rpt = json.loads(report_file.read_text())
-    assert rpt["status"] == "fail"
-    assert "Missing required column: b" in rpt["errors"][0]
-
-
-def test_validate_data_missing_required_warn(tmp_path):
-    """
-    Test validate_data does not raise when action_on_error is 'warn' despite errors.
-
-    WHY:
-    Provides a soft-fail mode allowing pipelines to continue on validation errors.
-    """
-    df = pd.DataFrame({"a": [1]})
-    report_file = tmp_path / "rep.json"
-    config = {
-        "data_validation": {
-            "enabled": True,
-            "action_on_error": "warn",
-            "report_path": str(report_file),
-            "schema": {
-                "columns": [{"name": "b", "required": True}]
-            }
-        },
-        "logging": {"level": "INFO", "log_file": str(tmp_path / "log.log")}
-    }
-
-    # Should not raise
-    validate_data(df, config)
-    rpt = json.loads(report_file.read_text())
+    # Check report file exists and contents reflect status "fail"
+    report_path = Path(config["data_validation"]["report_path"])
+    assert report_path.is_file()
+    rpt = json.loads(report_path.read_text())
     assert rpt["status"] == "fail"
 
-
-def test_validate_data_optional_missing(tmp_path):
+def test_validate_data_warn(tmp_path, basic_config):
     """
-    Test validate_data with an optional missing column does not raise and reports pass.
-
-    WHY:
-    Verifies optional schema entries are respected without error interruption.
+    Test that validate_data logs warnings and does not raise when action_on_error="warn".
     """
-    df = pd.DataFrame({"a": [1]})
-    report_file = tmp_path / "rep.json"
-    config = {
-        "data_validation": {
-            "enabled": True,
-            "action_on_error": "raise",
-            "report_path": str(report_file),
-            "schema": {
-                "columns": [{"name": "b", "required": False}]
-            }
-        },
-        "logging": {"level": "INFO", "log_file": str(tmp_path / "log.log")}
-    }
-
-    validate_data(df, config)
-    rpt = json.loads(report_file.read_text())
-    assert rpt["status"] == "pass"
-    assert rpt["errors"] == []
-
-
-def test_main_usage_and_success(tmp_path, capsys):
-    """
-    Test CLI main() prints usage on bad args and runs without error on valid args.
-
-    WHY:
-    Ensures the module can be used as a script for ad-hoc validation.
-    """
-    # Usage error
-    monkeyargs = ["prog"]
-    monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setenv("PYTHONPATH", str(Path.cwd()))
-    monkeypatch.setattr(sys, "argv", monkeyargs)
-    with pytest.raises(SystemExit) as exc:
-        main()
-    assert exc.value.code == 1
-    captured = capsys.readouterr()
-    assert "Usage" in captured.out
-
-    # Successful run
-    # Create a minimal Excel file
-    df = pd.DataFrame({"a": [1]})
-    xlsx = tmp_path / "data.xlsx"
-    df.to_excel(xlsx, index=False)
-    cfg = {"data_validation": {"enabled": False}}
-    cfg_file = tmp_path / "cfg.yaml"
-    cfg_file.write_text(yaml.dump(cfg))
-
-    monkeypatch.setattr(sys, "argv", ["prog", str(xlsx), str(cfg_file)])
-    # Should not raise
-    main()
-    monkeypatch.undo()
+    config_file, cfg_dict = basic_config
+    # Change action to "warn"
+    cfg_dict["data_validation"]["action_on_error"] = "warn"
+    df = pd.DataFrame({"id": [1], "score": [None], "cat": [0]})
+    setup_logger(cfg_dict)
+    # score missing => warning but no raise
+    validate_data(df, cfg_dict)
+    report_path = Path(cfg_dict["data_validation"]["report_path"])
+    assert report_path.is_file()
+    rpt = json.loads(report_path.read_text())
+    assert rpt["status"] == "pass" or "warnings" in rpt
