@@ -285,7 +285,7 @@ def run_inference(
 
         # 3) Read raw data
         raw_df = get_data(input_path)
-        required_feats = cfg.get("features", {}).get("feature_columns", [])
+        required_feats = cfg.get("raw_features", {})
 
         # 3a) Apply preprocessing pipeline (returns NumPy array)
         X_array = preprocess_inference_data(raw_df, pipeline, required_feats)

@@ -1,27 +1,22 @@
 name: mlops_project
 channels:
-- conda-forge
-- defaults
+  - conda-forge
+  - defaults
 dependencies:
-- python=3.10
-- __future__
-- argparse
-- joblib
-- logging
-- numpy
-- os
-- pandas
-- pathlib
-- pytest
-- python-dotenv
-- pyyaml
-- scikit-learn
-- sklearn
-- src
-- typing
-- yaml
-- pip:
-  - pytest-cov
+  - python=3.10
   - argparse
-  - pykernel
-  - flake8
+  - joblib
+  - numpy
+  - pandas
+  - pytest
+  - python-dotenv
+  - pyyaml
+  - scikit-learn
+  - sqlalchemy
+  - requests
+  - openpyxl
+  - pip
+  - pip:
+    - pytest-cov
+    - pykernel
+    - flake8

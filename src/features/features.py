@@ -1,4 +1,10 @@
-# src/features/features.py
+"""
+features.py
+
+Provides the option for feature engineering transformers with some potential examples.
+
+NOTE: In our case, we did not use this file since we did not engineer any features in our original jupyter notebook.
+""" 
 
 import pandas as pd
 import numpy as np

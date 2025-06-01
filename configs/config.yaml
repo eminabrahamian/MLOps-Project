@@ -1,5 +1,6 @@
 data_source:
-  path: "./data/raw/cancer.xlsx"   # Relative or absolute path to data file (update as needed)
+  raw_path: "./data/raw/cancer.xlsx"   
+  processed_path: "./data/processed/cancer_processed.xlsx"   
   type: "excel"                    # Data file type: 'csv' or 'excel'
   sheet_name: "Sheet1"             # Only used if type == 'excel'
   header: 0                        # Row number to use as column names (0-indexed), update if needed
@@ -17,49 +18,13 @@ data_split:
   random_state: 42
 
 model:
-  type: "RandomForestClassifier"  # Type of model to use
+  type: "knn"  # Type of model to use
   params:
-    n_estimators: 100
-    max_depth: 10
+    n_neighbors: 5
+    metric: cosine
     random_state: 42
-  save_path: models/random_forest.pkl
 
 target: target
-
-features:
-  # List all features used for prediction (matching actual column names in dataset)
-  feature_columns:
-    - mean radius
-    - mean texture
-    - mean perimeter
-    - mean area
-    - mean smoothness
-    - mean compactness
-    - mean concavity
-    - mean concave points
-    - mean symmetry
-    - mean fractal dimension
-    - radius error
-    - texture error
-    - perimeter error
-    - area error
-    - smoothness error
-    - compactness error
-    - concavity error
-    - concave points error
-    - symmetry error
-    - fractal dimension error
-    - worst radius
-    - worst texture
-    - worst perimeter
-    - worst area
-    - worst smoothness
-    - worst compactness
-    - worst concavity
-    - worst concave points
-    - worst symmetry
-    - worst fractal dimension
-  target_column: target  # The column containing the cancer diagnosis
 
 raw_features:
   - mean radius
@@ -95,7 +60,7 @@ raw_features:
 
 artifacts:
   preprocessing_pipeline: "models/preprocessing_pipeline.pkl"
-  model_path: "models/random_forest.pkl"
+  model_path: "models/active_model.pkl"
 
 data_validation:
   enabled: true

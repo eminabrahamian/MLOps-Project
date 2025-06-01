@@ -210,11 +210,11 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
 
     # 3. Train model using config["model"]
     model_cfg = config.get("model", {})
-    active_model = model_cfg.get("active", "knn")
+    active_model = model_cfg.get("type", "knn")
     if active_model != "knn":
         raise ValueError("Only 'knn' model_type is supported in this pipeline")
 
-    knn_params = model_cfg.get(active_model, {}).get("params", {"n_neighbors": 5, "metric": "cosine"})
+    knn_params = model_cfg.get('model', {}).get("params", {"n_neighbors": 5, "metric": "cosine"})
     logger.info("Training KNN with parameters: %s", knn_params)
     model = train_model(df_train_proc[feature_names], df_train_proc[target_col], active_model, knn_params)
 

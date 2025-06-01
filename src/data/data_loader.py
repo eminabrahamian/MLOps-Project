@@ -102,7 +102,7 @@ def load_data_source(ds_cfg: dict) -> pd.DataFrame:
     Raises:
         DataLoaderError: On missing file or read errors.
     """
-    path = Path(ds_cfg["path"])
+    path = Path(ds_cfg["raw_path"])
     typ = ds_cfg.get("type", "csv").lower()
     header = ds_cfg.get("header", 0)
     encoding = ds_cfg.get("encoding", None)
