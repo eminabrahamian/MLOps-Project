@@ -246,7 +246,7 @@ if __name__ == "__main__":
     """
     Standalone CLI for preprocessing.
 
-        python -m src.data.preprocessing <raw_data.xlsx> <config.yaml>
+        python -m src.preprocessing.preprocessing <raw_data.xlsx> <config.yaml>
 
     WHY:
         Allows ad-hoc preprocessing runs without writing additional scripts.
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) != 3:
         logger.error(
-            "Usage: python -m src.data.preprocessing <raw_data.xlsx> <config.yaml>"
+            "Usage: python -m src.preprocessing.preprocessing <raw_data.xlsx> <config.yaml>"
         )
         sys.exit(1)
 

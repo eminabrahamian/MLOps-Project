@@ -19,7 +19,7 @@ import pandas as pd
 import pytest
 import yaml
 
-from src.data.preprocessing import (
+from preprocessing.preprocessing import (
     ColumnRenamer,
     build_preprocessing_pipeline,
     get_output_feature_names,

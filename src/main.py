@@ -4,8 +4,8 @@ src/main.py
 Single entry‐point that orchestrates every stage of the MLOps pipeline:
 
 1. Data stage:
-   • Loads raw data using src.data.data_loader.load_data()
-   • Runs schema & quality checks using src.data.data_validator.validate_data()
+   • Loads raw data using src.data_loader.data_loader.load_data()
+   • Runs schema & quality checks using src.data_loader.data_validator.validate_data()
 
 2. Training stage:
    • Builds preprocessing + splits + trains model via src.model.model.run_model_pipeline()
@@ -41,8 +41,8 @@ import yaml
 import pandas as pd
 
 # ── Corrected Imports (include 'src.' prefix) ──────────────────────────────
-from src.data.data_loader import load_data
-from src.data.data_validator import validate_data
+from src.data_loader.data_loader import load_data
+from src.data_validator.data_validator import validate_data
 from src.models.model import run_model_pipeline
 from src.inference.inference import run_inference
 

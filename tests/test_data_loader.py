@@ -19,7 +19,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from src.data.data_loader import (
+from data_loader.data_loader import (
     load_config,
     setup_logger,
     load_data_source,

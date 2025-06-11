@@ -19,8 +19,8 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 
-from src.data.data_loader import load_data
-from src.data.preprocessing import build_preprocessing_pipeline, get_output_feature_names
+from src.data_loader.data_loader import load_data
+from src.preprocessing.preprocessing import build_preprocessing_pipeline, get_output_feature_names
 from src.evaluation.evaluation import evaluate_classification
 
 logger = logging.getLogger(__name__)
