@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/085bb869c2584a8a9c17fa8d4449db0f/artifacts
+end_time: 1749722288275
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 085bb869c2584a8a9c17fa8d4449db0f
+run_name: gaudy-fox-482
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749722272528
+status: 4
+tags: []
+user_id: Emin

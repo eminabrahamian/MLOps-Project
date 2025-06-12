@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/427d5047be504c36b8398b65d4e35dae/artifacts
+end_time: 1749720712656
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 427d5047be504c36b8398b65d4e35dae
+run_name: unleashed-wren-677
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749720706244
+status: 4
+tags: []
+user_id: Emin

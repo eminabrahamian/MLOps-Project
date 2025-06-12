@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/55b799d013524b5ebe7f2e3d3c3858ef/artifacts
+end_time: 1749720368561
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 55b799d013524b5ebe7f2e3d3c3858ef
+run_name: orderly-toad-773
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749720289122
+status: 4
+tags: []
+user_id: Emin

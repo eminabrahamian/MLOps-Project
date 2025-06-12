@@ -1,0 +1,16 @@
+{
+  "os":  "macOS-15.5-x86_64-i386-64bit",
+  "python":  "CPython 3.10.18",
+  "startedAt":  "2025-06-12T09:58:45.776539Z",
+  "program":  "/Users/Emin/Desktop/IE MBD/Code/MLOps/src/data_loader/run.py",
+  "codePath":  "src/data_loader/run.py",
+  "git":  {
+    "remote":  "https://github.com/eminabrahamian/MLOps-Project.git",
+    "commit":  "a64fc005f22094769d2c3306420678bd193fda28"
+  },
+  "email":  "eabrahamian23@gmail.com",
+  "root":  "/Users/Emin/Desktop/IE MBD/Code/MLOps/src/data_loader",
+  "host":  "Emins-MacBook-Pro-2.local",
+  "executable":  "/opt/anaconda3/envs/mlflow-9dee333503d39e50c47307cf71fd5b767d2242b3/bin/python",
+  "codePathLocal":  "run.py"
+}

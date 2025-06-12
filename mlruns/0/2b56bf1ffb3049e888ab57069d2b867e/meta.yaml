@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/2b56bf1ffb3049e888ab57069d2b867e/artifacts
+end_time: 1749720812371
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 2b56bf1ffb3049e888ab57069d2b867e
+run_name: polite-bear-377
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749720762267
+status: 4
+tags: []
+user_id: Emin

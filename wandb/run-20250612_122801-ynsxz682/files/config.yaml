@@ -1,0 +1,234 @@
+_wandb:
+    value:
+        cli_version: 0.20.1
+        m: []
+        python_version: 3.10.18
+        t:
+            "1":
+                - 50
+            "2":
+                - 50
+            "3":
+                - 2
+                - 13
+                - 16
+                - 55
+            "4": 3.10.18
+            "5": 0.20.1
+            "12": 0.20.1
+            "13": darwin-x86_64
+artifacts:
+    value:
+        model_path: models/active_model.pkl
+        preprocessing_pipeline: models/preprocessing_pipeline.pkl
+data_load:
+    value:
+        data_stage: raw
+        log_artifacts: true
+        log_sample_artifacts: true
+        log_summary_stats: true
+        output_dir: artifacts
+data_source:
+    value:
+        encoding: utf-8
+        header: 0
+        processed_path: ./data/processed/cancer_processed.xlsx
+        raw_path: ./data/raw/cancer.xlsx
+        sheet_name: Sheet1
+        type: excel
+data_split:
+    value:
+        random_state: 42
+        test_size: 0.2
+        valid_size: 0.2
+data_validation:
+    value:
+        action_on_error: raise
+        enabled: true
+        report_path: logs/validation_report.json
+        schema:
+            columns:
+                - dtype: int
+                  min: 0
+                  name: id
+                  required: true
+                - dtype: float
+                  min: 0
+                  name: mean radius
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: mean texture
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: mean perimeter
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: mean area
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: mean smoothness
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: mean compactness
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: mean concavity
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: mean concave points
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: mean symmetry
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: mean fractal dimension
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: radius error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: texture error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: perimeter error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: area error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: smoothness error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: compactness error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: concavity error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: concave points error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: symmetry error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: fractal dimension error
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst radius
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst texture
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst perimeter
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst area
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst smoothness
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst compactness
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst concavity
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst concave points
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst symmetry
+                  required: false
+                - dtype: float
+                  min: 0
+                  name: worst fractal dimension
+                  required: false
+                - allowed_values:
+                    - 0
+                    - 1
+                  dtype: int
+                  name: target
+                  required: true
+logging:
+    value:
+        datefmt: '%Y-%m-%d %H:%M:%S'
+        format: '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
+        level: INFO
+        log_file: ./logs/main.log
+main:
+    value:
+        hydra_options: ""
+        steps: data_loader
+        wandb:
+            entity: eminabrahamian-ie-university
+            project: mlops_project
+model:
+    value:
+        params:
+            metric: cosine
+            n_neighbors: 5
+            random_state: 42
+        type: knn
+raw_features:
+    value:
+        - mean radius
+        - mean texture
+        - mean perimeter
+        - mean area
+        - mean smoothness
+        - mean compactness
+        - mean concavity
+        - mean concave points
+        - mean symmetry
+        - mean fractal dimension
+        - radius error
+        - texture error
+        - perimeter error
+        - area error
+        - smoothness error
+        - compactness error
+        - concavity error
+        - concave points error
+        - symmetry error
+        - fractal dimension error
+        - worst radius
+        - worst texture
+        - worst perimeter
+        - worst area
+        - worst smoothness
+        - worst compactness
+        - worst concavity
+        - worst concave points
+        - worst symmetry
+        - worst fractal dimension
+target:
+    value: target

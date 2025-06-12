@@ -1,0 +1,70 @@
+_wandb:
+    value:
+        cli_version: 0.20.1
+        m: []
+        python_version: 3.10.18
+        t:
+            "1":
+                - 50
+            "2":
+                - 50
+            "3":
+                - 2
+                - 13
+                - 15
+                - 16
+                - 55
+            "4": 3.10.18
+            "5": 0.20.1
+            "12": 0.20.1
+            "13": darwin-x86_64
+artifacts:
+    value: '{''preprocessing_pipeline'': ''models/preprocessing_pipeline.pkl'', ''model_path'': ''models/active_model.pkl''}'
+data_load:
+    value: '{''data_stage'': ''raw'', ''output_dir'': ''artifacts'', ''log_artifacts'': True, ''log_summary_stats'': True, ''log_sample_artifacts'': True}'
+data_source:
+    value: '{''raw_path'': ''./data/raw/cancer.xlsx'', ''processed_path'': ''./data/processed/cancer_processed.xlsx'', ''type'': ''excel'', ''sheet_name'': ''Sheet1'', ''header'': 0, ''encoding'': ''utf-8''}'
+data_split:
+    value: '{''test_size'': 0.2, ''valid_size'': 0.2, ''random_state'': 42}'
+data_validation:
+    value: '{''enabled'': True, ''action_on_error'': ''raise'', ''report_path'': ''logs/validation_report.json'', ''schema'': {''columns'': [{''name'': ''id'', ''dtype'': ''int'', ''required'': True, ''min'': 0}, {''name'': ''mean radius'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''mean texture'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''mean perimeter'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''mean area'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''mean smoothness'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''mean compactness'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''mean concavity'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''mean concave points'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''mean symmetry'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''mean fractal dimension'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''radius error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''texture error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''perimeter error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''area error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''smoothness error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''compactness error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''concavity error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''concave points error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''symmetry error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''fractal dimension error'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst radius'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst texture'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst perimeter'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst area'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst smoothness'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst compactness'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst concavity'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst concave points'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst symmetry'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''worst fractal dimension'', ''dtype'': ''float'', ''required'': False, ''min'': 0.0}, {''name'': ''target'', ''dtype'': ''int'', ''required'': True, ''allowed_values'': [0, 1]}]}}'
+logging:
+    value: '{''level'': ''INFO'', ''log_file'': ''./logs/main.log'', ''format'': ''%(asctime)s - %(levelname)s - %(name)s - %(message)s'', ''datefmt'': ''%Y-%m-%d %H:%M:%S''}'
+main:
+    value: '{''wandb'': {''project'': ''mlops_project'', ''entity'': ''eminabrahamian-ie-university''}, ''steps'': ''all'', ''hydra_options'': ''''}'
+model:
+    value: '{''type'': ''knn'', ''params'': {''n_neighbors'': 5, ''metric'': ''cosine'', ''random_state'': 42}}'
+raw_features:
+    value:
+        - mean radius
+        - mean texture
+        - mean perimeter
+        - mean area
+        - mean smoothness
+        - mean compactness
+        - mean concavity
+        - mean concave points
+        - mean symmetry
+        - mean fractal dimension
+        - radius error
+        - texture error
+        - perimeter error
+        - area error
+        - smoothness error
+        - compactness error
+        - concavity error
+        - concave points error
+        - symmetry error
+        - fractal dimension error
+        - worst radius
+        - worst texture
+        - worst perimeter
+        - worst area
+        - worst smoothness
+        - worst compactness
+        - worst concavity
+        - worst concave points
+        - worst symmetry
+        - worst fractal dimension
+target:
+    value: target

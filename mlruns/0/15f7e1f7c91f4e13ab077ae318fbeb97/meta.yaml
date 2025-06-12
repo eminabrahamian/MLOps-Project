@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/15f7e1f7c91f4e13ab077ae318fbeb97/artifacts
+end_time: 1749723638681
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 15f7e1f7c91f4e13ab077ae318fbeb97
+run_name: flawless-rook-65
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749723623648
+status: 4
+tags: []
+user_id: Emin

@@ -1,4 +1,4 @@
-name: data_load
+name: data_loader
 
 channels:
   - conda-forge
@@ -12,10 +12,6 @@ dependencies:
   - python-dotenv
   - pyyaml
   - openpyxl
-  - sys
-  - logging
-  - pathlib
-  - datetime
   - pip
   - pip:
       - wandb

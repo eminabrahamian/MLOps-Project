@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/a189b1a00b7844d5b8a234284ce0b32c/artifacts
+end_time: 1749723029555
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a189b1a00b7844d5b8a234284ce0b32c
+run_name: skillful-flea-393
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749723016509
+status: 4
+tags: []
+user_id: Emin

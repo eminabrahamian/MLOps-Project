@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/281579736428262659/a30fd82b0e9f4b83bc143be86206e354/artifacts
+end_time: 1749722122088
+entry_point_name: ''
+experiment_id: '281579736428262659'
+lifecycle_stage: active
+run_id: a30fd82b0e9f4b83bc143be86206e354
+run_name: mercurial-owl-85
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749722116504
+status: 4
+tags: []
+user_id: Emin

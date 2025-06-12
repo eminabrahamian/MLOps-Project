@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/a1fb9a4f37d74842b90510ccbde2209a/artifacts
+end_time: 1749720749461
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a1fb9a4f37d74842b90510ccbde2209a
+run_name: gaudy-penguin-896
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749720743028
+status: 4
+tags: []
+user_id: Emin

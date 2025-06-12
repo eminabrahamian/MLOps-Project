@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/281579736428262659/7655c3803bbe4e74a14bf92c51951985/artifacts
+end_time: 1749723161596
+entry_point_name: ''
+experiment_id: '281579736428262659'
+lifecycle_stage: active
+run_id: 7655c3803bbe4e74a14bf92c51951985
+run_name: polite-wren-977
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749723155962
+status: 4
+tags: []
+user_id: Emin

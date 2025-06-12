@@ -1,0 +1,30 @@
+# MLproject  (root of repo)
+name: mlops_project
+conda_env: conda.yml          # reuse the same conda environment
+
+entry_points:
+
+  main:
+    parameters:
+      steps:
+        type: str
+        default: all
+        description: >-
+          Comma-separated list of pipeline steps
+          (e.g., "data_load,data_validation,model")
+    command: >
+      python main.py main.steps={steps}
+
+  main_with_override:
+    parameters:
+      steps:
+        type: str
+        default: all
+      hydra_options:
+        type: str
+        default: ""
+        description: >-
+          Extra Hydra overrides to pass through to individual steps,
+          in standard `key=value` syntax.
+    command: >
+      python main.py main.steps={steps} main.hydra_options="{hydra_options}"

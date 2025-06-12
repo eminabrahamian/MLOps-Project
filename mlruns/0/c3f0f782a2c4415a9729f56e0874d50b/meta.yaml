@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/c3f0f782a2c4415a9729f56e0874d50b/artifacts
+end_time: 1749722621355
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: c3f0f782a2c4415a9729f56e0874d50b
+run_name: peaceful-gnat-714
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749722605132
+status: 4
+tags: []
+user_id: Emin

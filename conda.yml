@@ -1,0 +1,14 @@
+name: mlflow_orchestrator
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10            # runtime interpreter
+  - hydra-core             # @hydra.main, config management
+  - omegaconf              # DictConfig + OmegaConf.to_container
+  - pip
+  - pip:
+    - mlflow-skinny          # mlflow.run orchestrator calls
+    - wandb                  # wandb.init, wandb.alert, wandb.finish

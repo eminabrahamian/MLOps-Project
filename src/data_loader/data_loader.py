@@ -13,7 +13,6 @@ import yaml
 
 class DataLoaderError(Exception):
     """Custom exception for data loading errors."""
-    pass
 
 
 def load_config(config_path: Path = None) -> dict:
@@ -39,13 +38,13 @@ def load_config(config_path: Path = None) -> dict:
         )
 
     if not config_path.is_file():
-        raise DataLoaderError("Config file not found: %s" % config_path)
+        raise DataLoaderError(f"Config file not found: {config_path}")
 
     try:
         with config_path.open("r") as f:
             return yaml.safe_load(f)
     except yaml.YAMLError as e:
-        raise DataLoaderError("Invalid YAML in config: %s" % e) from e
+        raise DataLoaderError(f"Invalid YAML in config: {e}") from e
 
 
 def setup_logger(cfg: dict) -> logging.Logger:
@@ -60,7 +59,14 @@ def setup_logger(cfg: dict) -> logging.Logger:
         logging.Logger: Configured logger for this module.
     """
     level = getattr(logging, cfg.get("level", "INFO").upper(), logging.INFO)
-    log_file = cfg.get("log_file", "logs/main.log")
+    # compute repo root by ascending two folders from this module
+    module_path = Path(__file__).resolve()
+    repo_root   = module_path.parents[2]  # MLOps/
+    # now join the configured log path under the repo root
+    log_file    = repo_root / cfg.get("log_file", "logs/main.log")
+    # ensure the logs/ folder exists
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+
     fmt = cfg.get(
         "format",
         "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
@@ -81,7 +87,7 @@ def setup_logger(cfg: dict) -> logging.Logger:
 
     # console handler at WARNING level
     ch = logging.StreamHandler()
-    ch.setLevel(logging.WARNING)
+    ch.setLevel(level)
     ch.setFormatter(logging.Formatter(fmt, datefmt=datefmt))
     logging.getLogger().addHandler(ch)
 
@@ -102,25 +108,27 @@ def load_data_source(ds_cfg: dict) -> pd.DataFrame:
     Raises:
         DataLoaderError: On missing file or read errors.
     """
+    project_root = Path(__file__).resolve().parents[2]  # MLOps/
     path = Path(ds_cfg["raw_path"])
+    resolved_path = (project_root / path).resolve()
     typ = ds_cfg.get("type", "csv").lower()
     header = ds_cfg.get("header", 0)
     encoding = ds_cfg.get("encoding", None)
     logger = logging.getLogger(__name__)
 
-    if not path.is_file():
-        raise DataLoaderError("Data file not found: %s" % path)
+    if not resolved_path.is_file():
+        raise DataLoaderError(f"Data file not found: {resolved_path}")
 
     try:
         if typ == "csv":
-            logger.info("Reading CSV: %s", path)
-            df = pd.read_csv(path, header=header, encoding=encoding)
+            logger.info("Reading CSV: %s", resolved_path)
+            df = pd.read_csv(resolved_path, header=header, encoding=encoding)
         elif typ == "excel":
             sheet = ds_cfg.get("sheet_name", 0)
-            logger.info("Reading Excel: %s (sheet=%s)", path, sheet)
-            df = pd.read_excel(path, sheet_name=sheet, header=header)
+            logger.info("Reading Excel: %s (sheet=%s)", resolved_path, sheet)
+            df = pd.read_excel(resolved_path, sheet_name=sheet, header=header)
         else:
-            raise DataLoaderError("Unsupported data type: %s" % typ)
+            raise DataLoaderError(f"Unsupported data type: {typ}")
 
         logger.info(
             "Loaded data; rows=%d, cols=%d", df.shape[0], df.shape[1]
@@ -163,7 +171,7 @@ def load_data() -> pd.DataFrame:
 if __name__ == "__main__":
     try:
         df = load_data()
-        print("Data loaded successfully; shape=%s" % (df.shape,))
+        print(f"Data loaded successfully; shape={df.shape}")
     except DataLoaderError as e:
         logging.error("DataLoaderError: %s", e)
     except Exception as e:

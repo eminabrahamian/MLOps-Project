@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/a617e9153247418c9bfa59a2a52250ed/artifacts
+end_time: 1749723969056
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a617e9153247418c9bfa59a2a52250ed
+run_name: enchanting-sloth-866
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749723951628
+status: 4
+tags: []
+user_id: Emin

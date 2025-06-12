@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/Emin/Desktop/IE%20MBD/Code/MLOps/mlruns/0/86c1c14a2b2d423d96f841ad2af830d3/artifacts
+end_time: 1749721106003
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 86c1c14a2b2d423d96f841ad2af830d3
+run_name: upset-kite-953
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749721011566
+status: 4
+tags: []
+user_id: Emin

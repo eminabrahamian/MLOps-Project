@@ -21,7 +21,7 @@ import pytest
 from pathlib import Path
 
 # Import the module under test
-from src.main import _load_config, _setup_logging, main
+from legacy_main import _load_config, _setup_logging, main
 
 # Helper to capture sys.exit calls
 class DummyExit(Exception):

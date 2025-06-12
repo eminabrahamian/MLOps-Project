@@ -1,6 +1,7 @@
 main:
-  WANDB_PROJECT: mlops_project
-  WANDB_ENTITY: *****  # REPLACE WITH OUR WANDB ENTITY
+  wandb: 
+    project: mlops_project                  # Project name in Weights & Biases
+    entity: eminabrahamian-ie-university    # Entity name in Weights & Biases
   steps: all            
   hydra_options: ""     # Add this line for CLI/MLflow runtime overrides
 
