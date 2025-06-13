@@ -1,0 +1,14 @@
+name: data_validator
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10        # std-lib + interpreter
+  - pandas             # dataframes / CSV I/O
+  - hydra-core         # @hydra.main + config support
+  - omegaconf          # DictConfig / OmegaConf
+  - python-dotenv      # load_dotenv
+  - pip
+  - pip:
+    - wandb            # W&B client (only on PyPI)

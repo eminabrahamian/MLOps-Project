@@ -15,11 +15,11 @@ from typing import Any, Dict, List
 
 import pandas as pd
 import yaml
+import sys
 
 
 class DataValidationError(Exception):
     """Raised when a validation error occurs and action_on_error is 'raise'."""
-    pass
 
 
 def load_config(config_path: Path = None) -> Dict[str, Any]:
@@ -251,8 +251,6 @@ def main() -> None:
     WHY:
         Enables quick ad-hoc validation without writing custom scripts.
     """
-    import sys
-    import yaml
 
     if len(sys.argv) != 3:
         print("Usage: python -m src.data.data_validator <data.xlsx> <config.yaml>")

@@ -8,7 +8,6 @@ This script ties together:
 - Configuration loading (`load_config`)
 - Logger setup (`setup_logger`)
 - Data ingestion (`load_data`)
-from data_loader.py :contentReference[oaicite:0]{index=0}
 """
 
 import sys
@@ -33,6 +32,7 @@ def main(cfg: DictConfig) -> None:
     """
     # 1) Set up structured logging
     logger = setup_logger(cfg.logging)
+    logger.info("Starting data_loader step")
 
     # Output directory and data file are all resolved from repo root
     output_dir = PROJECT_ROOT / cfg.data_load.output_dir
@@ -82,7 +82,7 @@ def main(cfg: DictConfig) -> None:
 
         # 5) Log basic metrics
         if run:
-            wandb.log({"n_rows": n_rows, "n_cols": n_cols, "shape": df.shape})
+            wandb.log({"n_rows": n_rows, "n_cols": n_cols, "shape": list(df.shape)})
 
         # 6) Optionally log a sample of the data
         if cfg.data_load.get("log_sample", True) and run:
