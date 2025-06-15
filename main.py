@@ -22,7 +22,7 @@ from omegaconf import DictConfig, OmegaConf
 # canonical list of pipeline stages (must match directory names under src/)
 PIPELINE_STEPS = [
     "data_loader",
-    "data_validation",
+    "data_validator",
     "model",
     "evaluation",
     "inference",
