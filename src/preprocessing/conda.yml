@@ -1,0 +1,16 @@
+name: preprocessing
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10        # interpreter + std-lib
+  - pandas             # DataFrame I/O
+  - numpy              # numerical arrays
+  - scikit-learn       # metrics and sklearn compatibility
+  - hydra-core         # @hydra.main + config support
+  - omegaconf          # DictConfig / OmegaConf
+  - python-dotenv      # load_dotenv
+  - pip
+  - pip:
+    - wandb            # W&B client (only on PyPI)
