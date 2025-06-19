@@ -1,17 +1,15 @@
 """
-evaluation.py
+Binary-classification evaluation utilities for our MLOps pipeline.
 
-Binary-classification evaluation utilities for our MLOps pipeline:
-- Computes a configurable set of metrics for any scikit-learn-compatible classifier.
+- Computes a configurable set of metrics for SK-learn compatible classifiers.
 - Driven by config.yaml for metric selection and artifact locations.
 - Can be invoked from model training pipeline or run standalone for reporting.
 """
 
 import json
 import logging
-import os
-from pathlib import Path
 import pickle
+from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
@@ -43,21 +41,27 @@ def _specificity(tn: int, fp: int) -> float:
 
 def _npv(tn: int, fn: int) -> float:
     """
-    Compute negative predictive value: TN / (TN + FN). Return NaN if denominator is zero.
+    Compute negative predictive value: TN / (TN + FN).
+    
+    Return NaN if denominator is zero.
 
     WHY:
-        NPV indicates reliability of negative predictions. Guard against zero-division.
+        NPV indicates reliability of negative predictions.
+        Guard against zero-division.
     """
     denom = tn + fn
     return tn / denom if denom else float("nan")
 
 
-def _round_dict_values(metrics: Dict[str, Any], digits: int = 3) -> Dict[str, Any]:
+def _round_dict_values(
+    metrics: Dict[str, Any], digits: int = 3
+) -> Dict[str, Any]:
     """
     Recursively round any float values in a nested metrics dict.
 
     WHY:
-        Rounding improves readability in logs and saved JSON without altering structure.
+        Rounding improves readability in logs and saved
+        JSON without altering structure.
     """
     rounded: Dict[str, Any] = {}
     for key, val in metrics.items():
@@ -87,27 +91,33 @@ def evaluate_classification(
     Parameters
     ----------
     model : Any
-        A fitted scikit-learn estimator with predict() (and optionally predict_proba()).
+        A fitted scikit-learn estimator with predict()
+        (and optionally predict_proba()).
     X : np.ndarray
         Features matrix for this split.
     y_true : np.ndarray
         True labels for this split.
     config : Dict[str, Any]
-        Full YAML configuration. Used to fetch default metric list if metrics is None.
+        Full YAML configuration. Used to fetch default metric
+        list if metrics is None.
     metrics : Optional[List[str]], default=None
-        List of metric names (case-insensitive) to compute e.g. ["accuracy","f1","roc auc"].
+        List of metric names (case-insensitive) to compute.
         If None, uses config["metrics"]["report"].
     split_name : Optional[str], default=None
-        Name of the data split (e.g. "validation", "test") used for logging context.
+        Name of the data split (e.g. "validation", "test")
+        used for logging context.
     log_results : bool, default=False
-        If True and split_name is provided, log all metric values at INFO level.
+        If True and split_name is provided,
+        log all metric values at INFO level.
     save_path : Optional[str], default=None
-        If provided, write the resulting metrics dict as JSON to this file.
+        If provided, write the resulting metrics dict as JSON
+        to this file.
 
     Returns
     -------
     Dict[str, Any]
-        Dictionary mapping metric names to values. Includes nested confusion matrix.
+        Dictionary mapping metric names to values. Includes
+        nested confusion matrix.
     """
     # Define alias mapping to canonical names
     alias_map = {
@@ -188,7 +198,10 @@ def evaluate_classification(
 
         elif name == "ROC AUC":
             try:
-                if hasattr(model, "predict_proba") and len(np.unique(y_true)) == 2:
+                if (
+                    hasattr(model, "predict_proba")
+                    and len(np.unique(y_true)) == 2
+                ):
                     proba = model.predict_proba(X)[:, 1]
                     results["ROC AUC"] = float(roc_auc_score(y_true, proba))
                 else:
@@ -213,7 +226,9 @@ def evaluate_classification(
     # 4) Optionally log the results
     if log_results and split_name:
         rounded = _round_dict_values(results)
-        logger.info("Metrics [%s]: %s", split_name, json.dumps(rounded, indent=2))
+        logger.info(
+            "Metrics [%s]: %s", split_name, json.dumps(rounded, indent=2)
+        )
 
     # 5) Optionally save to JSON
     if save_path:
@@ -246,16 +261,21 @@ def generate_split_report(
     config : Dict[str, Any]
         Full project configuration dict. Must contain:
           - "target": target column name
-          - "artifacts": { "processed_dir": "...", "model_path": "...", "metrics_dir": "..." }
+          - "artifacts": { "processed_dir": "...", "model_path": "...",
+                        "metrics_dir": "..." }
           - "metrics": metric list under ["report"]
     split : str, default="validation"
-        Name of the split, expects file "<split>_processed.csv" in processed_dir.
+        Name of the split, expects file "<split>_processed.csv" in
+        processed_dir.
     processed_dir : Optional[str], default=None
-        Directory containing processed CSVs. If None, use config["artifacts"]["processed_dir"].
+        Directory containing processed CSVs. If None,
+        use config["artifacts"]["processed_dir"].
     model_path : Optional[str], default=None
-        Path to pickled model file. If None, use config["artifacts"]["model_path"].
+        Path to pickled model file. If None,
+        use config["artifacts"]["model_path"].
     save_path : Optional[str], default=None
-        Path to write JSON report for this split. If None, save under config["artifacts"]["metrics_dir"]/split_metrics.json.
+        Path to write JSON report for this split. If None,
+        save under config["artifacts"]["metrics_dir"]/split_metrics.json.
 
     Returns
     -------
@@ -263,7 +283,9 @@ def generate_split_report(
         Metrics dictionary for this split. Empty dict if any error occurs.
     """
     cfg_art = config.get("artifacts", {})
-    processed_dir = processed_dir or cfg_art.get("processed_dir", "data/processed")
+    processed_dir = processed_dir or cfg_art.get(
+        "processed_dir", "data/processed"
+    )
     model_path = model_path or cfg_art.get("model_path", "models/model.pkl")
     metrics_dir = save_path or cfg_art.get("metrics_dir", "models/metrics")
     target_col = config.get("target")
@@ -278,7 +300,9 @@ def generate_split_report(
 
     df_split = pd.read_csv(split_file)
     if target_col not in df_split.columns:
-        logger.error("Target column '%s' missing in %s", target_col, split_file)
+        logger.error(
+            "Target column '%s' missing in %s", target_col, split_file
+        )
         return report
 
     X = df_split.drop(columns=[target_col]).values

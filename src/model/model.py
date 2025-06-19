@@ -1,27 +1,27 @@
 """
-src/model/model.py
+Leakage-proof, end-to-end MLOps pipeline.
 
-Leakage-proof, end-to-end MLOps pipeline:
 - Splits raw data first
 - Fits preprocessing pipeline ONLY on train split, applies to valid/test
 - Trains the K-Nearest Neighbors model (as built in the notebook)
 - Evaluates and saves model and preprocessing artifacts
 """
 
-import os
+import json
 import logging
 import pickle
-import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pandas as pd
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
 
-from src.data_loader.data_loader import load_data
-from src.preprocessing.preprocessing import build_preprocessing_pipeline, get_output_feature_names
 from src.evaluation.evaluation import evaluate_classification
+from src.preprocessing.preprocessing import (
+    build_preprocessing_pipeline,
+    get_output_feature_names,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -89,7 +89,9 @@ def save_artifact(obj: Any, path: str) -> None:
         raise
 
 
-def format_metrics(metrics: Dict[str, Any], ndigits: int = 3) -> Dict[str, Any]:
+def format_metrics(
+    metrics: Dict[str, Any], ndigits: int = 3
+) -> Dict[str, Any]:
     """
     Round numeric metric values for cleaner logging.
 
@@ -111,13 +113,16 @@ def format_metrics(metrics: Dict[str, Any], ndigits: int = 3) -> Dict[str, Any]:
 
 def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     """
-    Train–validate–test workflow with strict train-only fitting for preprocessing.
+    T-V-T workflow with strict train-only fitting for preprocessing.
 
     Steps:
-    1. Split raw DataFrame into train / valid / test using config["data_split"].
-    2. Fit preprocessing pipeline on X_train (raw features only), transform X_valid and X_test.
+    1. Split raw DataFrame into train / valid / test
+        using config["data_split"].
+    2. Fit preprocessing pipeline on X_train (raw features only),
+        transform X_valid and X_test.
     3. Train the KNN model (as specified in config).
-    4. Persist raw splits, processed splits, pipeline, and model artifacts.
+    4. Persist raw splits, processed splits, pipeline,
+        and model artifacts.
     5. Evaluate onvalidation and test sets; log selected metrics.
 
     Args:
@@ -162,7 +167,9 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     )
 
     # Save raw splits to CSV
-    splits_dir = Path(config.get("artifacts", {}).get("splits_dir", "data/splits"))
+    splits_dir = Path(
+        config.get("artifacts", {}).get("splits_dir", "data/splits")
+    )
     splits_dir.mkdir(parents=True, exist_ok=True)
     pd.concat([X_train, y_train.rename(target_col)], axis=1).to_csv(
         splits_dir / "train_raw.csv", index=False
@@ -188,7 +195,9 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     X_test_proc = preprocessor.transform(X_test)
 
     # Determine output feature names after transformation
-    feature_names = get_output_feature_names(preprocessor, raw_features, config)
+    feature_names = get_output_feature_names(
+        preprocessor, raw_features, config
+    )
 
     # Convert to DataFrame (engineered features)
     df_train_proc = pd.DataFrame(X_train_proc, columns=feature_names)
@@ -201,7 +210,9 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     df_test_proc[target_col] = y_test.values
 
     # Save processed splits
-    processed_dir = Path(config.get("artifacts", {}).get("processed_dir", "data/processed"))
+    processed_dir = Path(
+        config.get("artifacts", {}).get("processed_dir", "data/processed")
+    )
     processed_dir.mkdir(parents=True, exist_ok=True)
     df_train_proc.to_csv(processed_dir / "train_processed.csv", index=False)
     df_valid_proc.to_csv(processed_dir / "valid_processed.csv", index=False)
@@ -214,41 +225,47 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     if active_model != "knn":
         raise ValueError("Only 'knn' model_type is supported in this pipeline")
 
-    knn_params = model_cfg.get('model', {}).get("params", {"n_neighbors": 5, "metric": "cosine"})
+    knn_params = model_cfg.get("model", {}).get(
+        "params", {"n_neighbors": 5, "metric": "cosine"}
+    )
     logger.info("Training KNN with parameters: %s", knn_params)
-    model = train_model(df_train_proc[feature_names], df_train_proc[target_col], active_model, knn_params)
+    model = train_model(
+        df_train_proc[feature_names],
+        df_train_proc[target_col],
+        active_model,
+        knn_params,
+    )
 
     # 4. Save artifacts: pipeline and model
     art_cfg = config.get("artifacts", {})
-    pipeline_path = art_cfg.get("preprocessing_pipeline", "models/preprocessing_pipeline.pkl")
+    pipeline_path = art_cfg.get(
+        "preprocessing_pipeline", "models/preprocessing_pipeline.pkl"
+    )
     model_path = art_cfg.get("model_path", "models/knn_model.pkl")
     save_artifact(preprocessor, pipeline_path)
     save_artifact(model, model_path)
 
-    # If additional model save_path is specified under config["model"][active_model]["save_path"], use that
+    # If additional model save_path is specified under
+    # config["model"][active_model]["save_path"], use that
     additional_save = model_cfg.get(active_model, {}).get("save_path")
     if additional_save:
         save_artifact(model, additional_save)
 
     # 5. Evaluate on validation and test sets
     logger.info("Evaluating on validation set")
-    y_pred_valid = model.predict(df_valid_proc[feature_names])
     valid_metrics = evaluate_classification(
         model,
-        df_valid_proc[feature_names],    # pass DataFrame, not .values
+        df_valid_proc[feature_names],  # pass DataFrame, not .values
         y_valid.values,
         config,
         split_name="validation",
         log_results=False,
     )
 
-
-
     logger.info("Evaluating on test set")
-    y_pred_test = model.predict(df_test_proc[feature_names])
     test_metrics = evaluate_classification(
         model,
-        df_test_proc[feature_names],     # pass DataFrame, not .values
+        df_test_proc[feature_names],  # pass DataFrame, not .values
         y_test.values,
         config,
         split_name="test",
@@ -256,5 +273,10 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     )
 
     # Log rounded metrics
-    logger.info("Validation metrics: %s", json.dumps(format_metrics(valid_metrics), indent=2))
-    logger.info("Test metrics: %s", json.dumps(format_metrics(test_metrics), indent=2))
+    logger.info(
+        "Validation metrics: %s",
+        json.dumps(format_metrics(valid_metrics), indent=2),
+    )
+    logger.info(
+        "Test metrics: %s", json.dumps(format_metrics(test_metrics), indent=2)
+    )

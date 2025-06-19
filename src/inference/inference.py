@@ -1,7 +1,6 @@
 """
-inference.py
+Modular inference utility for MLOps pipeline.
 
-Modular inference utility for MLOps pipeline:
 – Loads configuration and logger settings
 – Loads pickled preprocessing pipeline and trained model
 – Reads raw input data (CSV or Excel) using get_data()
@@ -27,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class InferenceError(Exception):
     """Raised when any step of the inference pipeline fails."""
+
     pass
 
 
@@ -93,7 +93,8 @@ def load_model(model_path: Union[str, Path]) -> BaseEstimator:
     Load a serialized model from disk using pickle.
 
     WHY:
-        Ensure the exact trained model is loaded with correct random_state and hyperparameters.
+        Ensure the exact trained model is loaded with correct
+        random_state and hyperparameters.
     """
     model_file = Path(model_path)
     if not model_file.is_file():
@@ -142,11 +143,21 @@ def get_data(data_path: Union[str, Path]) -> pd.DataFrame:
     try:
         if suffix == ".csv":
             df = pd.read_csv(file)
-            logger.info("Read CSV inference data: %s (rows=%d, cols=%d)", file, df.shape[0], df.shape[1])
+            logger.info(
+                "Read CSV inference data: %s (rows=%d, cols=%d)",
+                file,
+                df.shape[0],
+                df.shape[1],
+            )
             return df
         elif suffix in [".xls", ".xlsx"]:
             df = pd.read_excel(file)
-            logger.info("Read Excel inference data: %s (rows=%d, cols=%d)", file, df.shape[0], df.shape[1])
+            logger.info(
+                "Read Excel inference data: %s (rows=%d, cols=%d)",
+                file,
+                df.shape[0],
+                df.shape[1],
+            )
             return df
         else:
             raise InferenceError(f"Unsupported data format: {suffix}")
@@ -157,14 +168,14 @@ def get_data(data_path: Union[str, Path]) -> pd.DataFrame:
 def preprocess_inference_data(
     data: Union[pd.DataFrame, np.ndarray],
     pipeline: BaseEstimator,
-    required_features: List[str]
+    required_features: List[str],
 ) -> np.ndarray:
     """
     Apply preprocessing pipeline to raw data and verify required features.
 
     WHY:
-        Ensures data columns match training features, preventing silent mismatches,
-        and returns a NumPy array ready for model.predict().
+        Ensures data columns match training features, preventing
+        silent mismatches,and returns a NumPy array ready for model.predict().
     """
     try:
         # If numpy array, convert to DataFrame using feature names
@@ -178,7 +189,10 @@ def preprocess_inference_data(
 
         X = data[required_features]
         transformed = pipeline.transform(X)
-        logger.info("Applied preprocessing pipeline; output shape: %s", transformed.shape)
+        logger.info(
+            "Applied preprocessing pipeline; output shape: %s",
+            transformed.shape,
+        )
         return transformed
     except Exception as e:
         logger.error("Error during inference preprocessing: %s", e)
@@ -186,16 +200,15 @@ def preprocess_inference_data(
 
 
 def make_predictions(
-    model: BaseEstimator,
-    X: np.ndarray,
-    return_proba: bool = False
+    model: BaseEstimator, X: np.ndarray, return_proba: bool = False
 ) -> Union[np.ndarray, tuple]:
     """
     Generate predictions (and optional probabilities) from the model.
 
     WHY:
-        Separate prediction logic to handle classification/regression differences
-        and optionally return probabilistic outputs for downstream decision-making.
+        Separate prediction logic to handle classification/regression
+        differences and optionally return probabilistic outputs for
+        downstream decision-making.
     """
     try:
         preds = model.predict(X)
@@ -205,7 +218,10 @@ def make_predictions(
                 logger.info("Generated predictions and probabilities")
                 return preds, probs
             else:
-                logger.warning("Model does not support predict_proba; returning only predictions")
+                logger.warning(
+                    "Model does not support predict_proba;"
+                    " returning only predictions"
+                )
         logger.info("Generated predictions")
         return preds
     except Exception as e:
@@ -216,13 +232,14 @@ def make_predictions(
 def save_predictions(
     predictions: Union[np.ndarray, tuple],
     output_path: Union[str, Path],
-    data_index: Union[pd.Index, List[Any]] = None
+    data_index: Union[pd.Index, List[Any]] = None,
 ) -> None:
     """
     Save predictions (and optional probabilities) to an Excel file.
 
     WHY:
-        Persist results in a structured file for reporting, auditing, and downstream use.
+        Persist results in a structured file for reporting, auditing,
+        and downstream use.
     """
     out_file = Path(output_path)
     try:
@@ -231,7 +248,9 @@ def save_predictions(
 
         if isinstance(predictions, tuple):
             preds, probs = predictions
-            df = pd.DataFrame(probs, columns=[f"class_{i}" for i in range(probs.shape[1])])
+            df = pd.DataFrame(
+                probs, columns=[f"class_{i}" for i in range(probs.shape[1])]
+            )
             df["prediction"] = preds
         else:
             df = pd.DataFrame({"prediction": predictions})
@@ -251,10 +270,11 @@ def run_inference(
     input_path: str,
     config_path: str,
     output_path: str,
-    return_proba: bool = False
+    return_proba: bool = False,
 ) -> None:
     """
-    End-to-end inference pipeline:
+    End-to-end inference pipeline.
+    
       1. Load config and set up logging
       2. Load preprocessing pipeline and model
       3. Read raw data and apply preprocessing
@@ -262,8 +282,8 @@ def run_inference(
       5. Save predictions to Excel
 
     WHY:
-        Consolidate all steps in a single entry function, providing a clear flow
-        and central error handling.
+        Consolidate all steps in a single entry function,
+        providing a clear flow and central error handling.
     """
     try:
         # 1) Load config and logger
@@ -274,11 +294,18 @@ def run_inference(
         # 2) Load artifacts
         artifacts = cfg.get("artifacts", {})
         pipeline_path = artifacts.get("preprocessing_pipeline")
-        model_path = artifacts.get("model_path") or cfg.get("model", {}).get("save_path")
+        model_path = artifacts.get("model_path") or cfg.get("model", {}).get(
+            "save_path"
+        )
         if not pipeline_path:
-            raise InferenceError("Missing 'artifacts.preprocessing_pipeline' in config")
+            raise InferenceError(
+                "Missing 'artifacts.preprocessing_pipeline'" " in config"
+            )
         if not model_path:
-            raise InferenceError("Missing 'artifacts.model_path' (or 'model.save_path') in config")
+            raise InferenceError(
+                "Missing 'artifacts.model_path'"
+                " (or 'model.save_path') in config"
+            )
 
         pipeline = load_pipeline(pipeline_path)
         model = load_model(model_path)
@@ -290,7 +317,8 @@ def run_inference(
         # 3a) Apply preprocessing pipeline (returns NumPy array)
         X_array = preprocess_inference_data(raw_df, pipeline, required_feats)
 
-        # 3b) Wrap back into DataFrame so model.predict sees correct column names
+        # 3b) Wrap back into DataFrame so model.predict
+        # sees correct column names
         X_df = pd.DataFrame(X_array, columns=required_feats)
         preds = make_predictions(model, X_df, return_proba)
 
@@ -299,7 +327,10 @@ def run_inference(
 
         # 5) Save predictions
         # Default output folder: data/inference_predictions/
-        out_file = output_path or (Path("data/inference_predictions") / f"{Path(input_path).stem}_predictions.xlsx")
+        out_file = output_path or (
+            Path("data/inference_predictions")
+            / f"{Path(input_path).stem}_predictions.xlsx"
+        )
         save_predictions(preds, out_file, raw_df.index)
 
     except Exception as e:
@@ -316,21 +347,32 @@ def main() -> None:
             <input_file> <config_yaml> <output_file> [--proba]
 
     WHY:
-        Provides a user-friendly script to perform inference without manual coding,
-        enabling reproducible and auditable model scoring.
+        Provides a user-friendly script to perform inference
+        without manual coding, enabling reproducible and auditable
+        model scoring.
     """
-    parser = argparse.ArgumentParser(description="Run batch inference on new data")
-    parser.add_argument("input_file", help="Path to raw input data (CSV or Excel)")
+    parser = argparse.ArgumentParser(
+        description="Run batch inference on new data"
+    )
+    parser.add_argument(
+        "input_file", help="Path to raw input data (CSV or Excel)"
+    )
     parser.add_argument("config_yaml", help="Path to config.yaml")
-    parser.add_argument("output_file", help="Path to save output predictions (Excel)")
-    parser.add_argument("--proba", action="store_true", help="Include probability scores in output")
+    parser.add_argument(
+        "output_file", help="Path to save output predictions (Excel)"
+    )
+    parser.add_argument(
+        "--proba",
+        action="store_true",
+        help="Include probability scores in output",
+    )
     args = parser.parse_args()
 
     run_inference(
         input_path=args.input_file,
         config_path=args.config_yaml,
         output_path=args.output_file,
-        return_proba=args.proba
+        return_proba=args.proba,
     )
 
 

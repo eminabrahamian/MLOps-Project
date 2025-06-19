@@ -1,23 +1,25 @@
 """
 main.py
 
-Orchestrator for the end-to-end MLflow pipeline.  
-Defines a single Hydra entrypoint that launches each step 
+Orchestrator for the end-to-end MLflow pipeline.
+Defines a single Hydra entrypoint that launches each step
 (data_load, data_validation, model, evaluation, inference)
-as a separate MLflow project subrun, and tracks the overall run in Weights & Biases.
+as a separate MLflow project subrun, and tracks the overall
+run in Weights & Biases.
 """
 
+import logging
 import os
 import sys
 import tempfile
-import logging
 from datetime import datetime
 from pathlib import Path
 
 import hydra
 import mlflow
-import wandb
 from omegaconf import DictConfig, OmegaConf
+
+import wandb
 
 # canonical list of pipeline stages (must match directory names under src/)
 PIPELINE_STEPS = [
@@ -35,7 +37,7 @@ STEPS_WITH_OVERRIDES = {"model"}
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger("orchestrator")
 
@@ -103,7 +105,7 @@ def main(cfg: DictConfig) -> None:
                 logger.exception("Step %s failed", step)
                 wandb_run.alert(
                     title="Orchestrator Failure",
-                    text=f"Step `{step}` crashed: {e}"
+                    text=f"Step `{step}` crashed: {e}",
                 )
                 sys.exit(1)
 

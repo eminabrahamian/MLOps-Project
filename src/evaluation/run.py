@@ -1,33 +1,35 @@
 """
-src/evaluation/run.py
+Orchestrates end-to-end model evaluation using Hydra configs.
 
-Orchestrates end-to-end model evaluation using Hydra configs. 
 Loads trained model and processed datasets, computes metrics for each split,
-and saves JSON reports and scalars to Weights & Biases. 
+and saves JSON reports and scalars to Weights & Biases.
 Includes structured logging, error handling, and configurable splits.
 """
 
-
 import logging
-from pathlib import Path
 from datetime import datetime
-
-from omegaconf import DictConfig, OmegaConf
-from dotenv import load_dotenv
+from pathlib import Path
 
 import hydra
-import wandb
+from dotenv import load_dotenv
+from omegaconf import DictConfig, OmegaConf
 
+import wandb
 from evaluation import generate_split_report
 
 # Resolve project root (two levels up from this file)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-# 1) Hydra entrypoint
-@hydra.main(config_path=str(PROJECT_ROOT / "configs"), config_name="config", version_base=None)
+
+@hydra.main(
+    config_path=str(PROJECT_ROOT / "configs"),
+    config_name="config",
+    version_base=None,
+)
 def main(cfg: DictConfig) -> None:
     """
     MLflow-/Hydra-ready wrapper for our evaluation module.
+
     Picks up parameters from cfg, runs generate_split_report for each split,
     and logs everything to W&B.
     """
@@ -56,14 +58,20 @@ def main(cfg: DictConfig) -> None:
             name=run_name,
         )
         # log full config to W&B
-        wandb.config.update(OmegaConf.to_container(cfg, resolve=True), allow_val_change=True)
+        wandb.config.update(
+            OmegaConf.to_container(cfg, resolve=True), allow_val_change=True
+        )
     except Exception as e:
         logger.error("Failed to start W&B run: %s", e)
         raise
 
     # 5) For each split, generate & save metrics
     try:
-        splits = cfg.evaluation.splits if "splits" in cfg.evaluation else ["validation"]
+        splits = (
+            cfg.evaluation.splits
+            if "splits" in cfg.evaluation
+            else ["validation"]
+        )
         metrics_dir = Path(cfg.artifacts.metrics_dir)
         metrics_dir.mkdir(parents=True, exist_ok=True)
 
@@ -83,7 +91,9 @@ def main(cfg: DictConfig) -> None:
                 wandb.save(str(json_path))
                 logger.info("Saved split report to %s", json_path)
             else:
-                logger.warning("Expected metrics file not found: %s", json_path)
+                logger.warning(
+                    "Expected metrics file not found: %s", json_path
+                )
 
             # 6b) Flatten & log numeric metrics to W&B
             flat = {}
@@ -100,6 +110,7 @@ def main(cfg: DictConfig) -> None:
     finally:
         wandb_run.finish()
         logger.info("W&B run finished")
+
 
 if __name__ == "__main__":
     # Hydra will supply the `cfg` at runtime — ignore the lint warning here

@@ -1,24 +1,23 @@
 """
-src/data_validator/run.py
-
 Hydra-driven, MLflow-invokable entrypoint for the data_validation step.
+
 Loads raw data from a W&B artifact (or local path), runs schema validation,
 and logs both the cleaned dataset and the validation report as W&B artifacts.
 """
 
-import sys
 import os
+import sys
 import tempfile
-from pathlib import Path
 from datetime import datetime
-import pandas as pd
+from pathlib import Path
 
 import hydra
-import wandb
-from omegaconf import DictConfig, OmegaConf
+import pandas as pd
 from dotenv import load_dotenv
+from omegaconf import DictConfig, OmegaConf
 
-from data_validator import validate_data, setup_logger
+import wandb
+from data_validator import setup_logger, validate_data
 
 # Resolve project root (two levels up from this file)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -27,6 +26,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
+
 
 def html_schema_report(report: dict) -> str:
     """
@@ -37,7 +37,8 @@ def html_schema_report(report: dict) -> str:
           - "result": overall pass/fail
           - "errors": list of error messages
           - "warnings": list of warning messages
-          - "details": dict mapping column names to dicts of individual check results
+          - "details": dict mapping column names to
+                       dicts of individual check results
 
     Returns:
         HTML string for display in W&B or a browser.
@@ -51,7 +52,10 @@ def html_schema_report(report: dict) -> str:
     # Counts
     errs = report.get("errors", [])
     warns = report.get("warnings", [])
-    lines.append(f"<p><strong>Errors:</strong> {len(errs)}  |  <strong>Warnings:</strong> {len(warns)}</p>")
+    lines.append(
+        f"<p><strong>Errors:</strong> {len(errs)}  |"
+        "  <strong>Warnings:</strong> {len(warns)}</p>"
+    )
 
     # List out errors and warnings
     if errs:
@@ -98,7 +102,11 @@ def html_schema_report(report: dict) -> str:
     return "\n".join(lines)
 
 
-@hydra.main(config_path=str(PROJECT_ROOT / "configs"), config_name="config", version_base=None)
+@hydra.main(
+    config_path=str(PROJECT_ROOT / "configs"),
+    config_name="config",
+    version_base=None,
+)
 def main(cfg: DictConfig) -> None:
     """
     Hydra entrypoint for data validation.
@@ -108,7 +116,7 @@ def main(cfg: DictConfig) -> None:
 
     And under `data_validation:`:
       raw_artifact     # name of the W&B artifact containing raw CSV
-      report_path      # relative path for JSON report (e.g. logs/validation_report.json)
+      report_path      # relative path for JSON report
       action_on_error  # "raise" or "warn"
       enabled          # true/false
       schema:          # list of column schemas
@@ -137,9 +145,11 @@ def main(cfg: DictConfig) -> None:
             name=f"data_validator_{datetime.now():%Y%m%d_%H%M%S}",
             config=dict(cfg),
             job_type="data_validator",
-            tags=["data_validator"]
+            tags=["data_validator"],
         )
-        logger.info("Initialized W&B run: %s/%s", cfg.main.wandb.project, run.name)
+        logger.info(
+            "Initialized W&B run: %s/%s", cfg.main.wandb.project, run.name
+        )
 
         # 4. Fetch raw data artifact from W&B
         raw_art = run.use_artifact("raw_data:latest")
@@ -149,13 +159,17 @@ def main(cfg: DictConfig) -> None:
         if df.empty:
             logger.warning("Loaded DataFrame is empty; skipping validation")
         if df.duplicated().sum() > 0:
-            logger.warning("DataFrame contains duplicates; consider deduplication")
+            logger.warning(
+                "DataFrame contains duplicates;" " consider deduplication"
+            )
         logger.info("Downloaded raw data: %s", raw_data_path)
 
         # 5. Run validation
         # First, massage config so report_path is absolute under project root
         cfg_dict = OmegaConf.to_container(cfg, resolve=True)
-        rpt_rel = cfg_dict["data_validation"].get("report_path", "logs/validation_report.json")
+        rpt_rel = cfg_dict["data_validation"].get(
+            "report_path", "logs/validation_report.json"
+        )
         abs_report = PROJECT_ROOT / rpt_rel
         # ensure directory exists
         abs_report.parent.mkdir(parents=True, exist_ok=True)
@@ -182,8 +196,11 @@ def main(cfg: DictConfig) -> None:
 
             # Optional: push summary metrics
             import json
+
             report = json.loads(abs_report.read_text())
-            wandb.summary["validation_status"] = report.get("status", "unknown")
+            wandb.summary["validation_status"] = report.get(
+                "status", "unknown"
+            )
             wandb.summary["num_errors"] = len(report.get("errors", []))
             wandb.summary["num_warnings"] = len(report.get("warnings", []))
 

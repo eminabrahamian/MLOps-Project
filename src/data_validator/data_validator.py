@@ -1,21 +1,21 @@
 """
-data_validator.py
+Modular data validation utility for MLOps pipelines.
 
-Modular data validation utility for MLOps pipelines:
-– Reads validation rules from configs/config.yaml  
-– Checks schema: required columns, dtypes, missing values, ranges, allowed values  
-– Logs all checks and writes a JSON report artifact  
+– Reads validation rules from configs/config.yaml
+– Checks schema: required columns, dtypes, missing values,
+                 ranges, allowed values
+– Logs all checks and writes a JSON report artifact
 – Behavior on errors is configurable (raise or warn)
 """
 
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
 import pandas as pd
 import yaml
-import sys
 
 
 class DataValidationError(Exception):
@@ -31,7 +31,9 @@ def load_config(config_path: Path = None) -> Dict[str, Any]:
         avoiding hard‐coded values in code and easing reproducibility.
     """
     if config_path is None:
-        config_path = Path(__file__).resolve().parents[2] / "configs" / "config.yaml"
+        config_path = (
+            Path(__file__).resolve().parents[2] / "configs" / "config.yaml"
+        )
 
     if not config_path.is_file():
         raise DataValidationError("Config file not found: %s" % config_path)
@@ -52,7 +54,9 @@ def setup_logger(cfg: Dict[str, Any]) -> logging.Logger:
         and that logs are captured to both file and console.
     """
     log_cfg = cfg.get("logging", {})
-    level = getattr(logging, log_cfg.get("level", "INFO").upper(), logging.INFO)
+    level = getattr(
+        logging, log_cfg.get("level", "INFO").upper(), logging.INFO
+    )
     log_file = log_cfg.get("log_file", "logs/validation.log")
     fmt = log_cfg.get(
         "format", "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
@@ -89,10 +93,10 @@ def _is_dtype_compatible(series: pd.Series, expected: str) -> bool:
     """
     kind = series.dtype.kind
     return (
-        (expected == "int"   and kind in ("i", "u")) or
-        (expected == "float" and kind == "f")       or
-        (expected == "str"   and kind in ("O", "U", "S")) or
-        (expected == "bool"  and kind == "b")
+        (expected == "int" and kind in ("i", "u"))
+        or (expected == "float" and kind == "f")
+        or (expected == "str" and kind in ("O", "U", "S"))
+        or (expected == "bool" and kind == "b")
     )
 
 
@@ -101,7 +105,7 @@ def _validate_column(
     col_cfg: Dict[str, Any],
     errors: List[str],
     warnings: List[str],
-    report: Dict[str, Any]
+    report: Dict[str, Any],
 ) -> None:
     """
     Validate one column against its schema entry.
@@ -132,10 +136,14 @@ def _validate_column(
     expected = col_cfg.get("dtype")
     if expected and not _is_dtype_compatible(series, expected):
         msg = "Column '%s' dtype '%s' != expected '%s'" % (
-            name, series.dtype, expected
+            name,
+            series.dtype,
+            expected,
         )
         errors.append(msg)
-        col_report.update(dtype=str(series.dtype), expected_dtype=expected, error=msg)
+        col_report.update(
+            dtype=str(series.dtype), expected_dtype=expected, error=msg
+        )
         report[name] = col_report
         return  # stop further checks
 
@@ -155,7 +163,9 @@ def _validate_column(
         below = int((series < col_cfg["min"]).sum())
         if below:
             msg = "Column '%s' has %d values below min %s" % (
-                name, below, col_cfg["min"]
+                name,
+                below,
+                col_cfg["min"],
             )
             errors.append(msg)
             col_report["below_min"] = below
@@ -164,7 +174,9 @@ def _validate_column(
         above = int((series > col_cfg["max"]).sum())
         if above:
             msg = "Column '%s' has %d values above max %s" % (
-                name, above, col_cfg["max"]
+                name,
+                above,
+                col_cfg["max"],
             )
             errors.append(msg)
             col_report["above_max"] = above
@@ -175,7 +187,9 @@ def _validate_column(
         invalid = int((~series.isin(allowed)).sum())
         if invalid:
             msg = "Column '%s' has %d invalid values not in %s" % (
-                name, invalid, allowed
+                name,
+                invalid,
+                allowed,
             )
             errors.append(msg)
             col_report["invalid_count"] = invalid
@@ -191,7 +205,7 @@ def _validate_column(
 
 def validate_data(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     """
-    Main entry: load rules, run per-column checks, write report, handle errors.
+    Load validation rules, execute column checks, generate report, and handle errors.
 
     WHY:
         Enforcing data contracts early prevents garbage data from flowing
@@ -205,7 +219,8 @@ def validate_data(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     columns = cfg.get("schema", {}).get("columns", [])
     if not columns:
         logging.getLogger(__name__).warning(
-            "No columns defined under data_validation.schema.columns; skipping."
+            "No columns defined under data_validation.schema.columns; "
+            "skipping."
         )
         return
 
@@ -221,13 +236,23 @@ def validate_data(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     # write JSON report
     report_path.parent.mkdir(parents=True, exist_ok=True)
     with report_path.open("w") as f:
-        json.dump({"status": "fail" if errors else "pass",
-                   "errors": errors, "warnings": warnings, "details": report}, f, indent=2)
+        json.dump(
+            {
+                "status": "fail" if errors else "pass",
+                "errors": errors,
+                "warnings": warnings,
+                "details": report,
+            },
+            f,
+            indent=2,
+        )
 
     # log results
     logger = logging.getLogger(__name__)
     if errors:
-        logger.error("Validation failed: %d errors (see %s)", len(errors), report_path)
+        logger.error(
+            "Validation failed: %d errors (see %s)", len(errors), report_path
+        )
         for e in errors:
             logger.error(e)
     if warnings:
@@ -246,14 +271,18 @@ def validate_data(df: pd.DataFrame, config: Dict[str, Any]) -> None:
 
 def main() -> None:
     """
+    Run the data validator from the command line.
+    
     CLI entry: python -m src.data.data_validator <data.xlsx> <config.yaml>
 
     WHY:
         Enables quick ad-hoc validation without writing custom scripts.
     """
-
     if len(sys.argv) != 3:
-        print("Usage: python -m src.data.data_validator <data.xlsx> <config.yaml>")
+        print(
+            "Usage: python -m src.data.data_validator "
+            "<data.xlsx> <config.yaml>"
+        )
         sys.exit(1)
 
     data_path, cfg_path = sys.argv[1], sys.argv[2]

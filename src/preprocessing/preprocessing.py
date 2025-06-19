@@ -1,7 +1,6 @@
 """
-preprocessing.py
+End-to-end, leakage-proof preprocessing for the MLOps project.
 
-End-to-end, leakage-proof preprocessing for the MLOps project:
 – Builds an sklearn Pipeline from YAML config
 – Transforms raw DataFrame and saves processed output to data/processed/
 – Provides CLI for standalone execution
@@ -22,17 +21,17 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     KBinsDiscretizer,
     MinMaxScaler,
-    StandardScaler,
     OneHotEncoder,
     OrdinalEncoder,
+    StandardScaler,
 )
 
 from src.features.features import (
-    RiskScore,
     BMITransformer,
+    DateTimeFeatures,
     InteractionFeatures,
     OutlierFlagger,
-    DateTimeFeatures,
+    RiskScore,
 )
 
 # Configure a module-level logger
@@ -47,13 +46,17 @@ class ColumnRenamer(BaseEstimator, TransformerMixin):
         Ensures all renaming logic is centralized and only applied once,
         avoiding hard-coded column names scattered through code.
     """
+
     def __init__(self, rename_map: dict | None = None):
+        """Initialize ColumnRenamer with a dictionary mapping old to new column names."""
         self.rename_map = rename_map or {}
 
     def fit(self, X: pd.DataFrame, y=None):
+        """Fit method required by sklearn; does nothing and returns self."""
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Rename DataFrame columns based on the initialized rename_map."""
         return X.rename(columns=self.rename_map, inplace=False)
 
 
@@ -82,30 +85,36 @@ def build_preprocessing_pipeline(config: Dict) -> Pipeline:
     steps: list[tuple] = []
 
     # 1) RiskScore transformer
-    steps.append(("risk_score", RiskScore(pp_cfg.get("icd10_chapter_flags", []))))
+    steps.append(
+        ("risk_score", RiskScore(pp_cfg.get("icd10_chapter_flags", [])))
+    )
 
     # 2) Optional feature transformers
     if pp_cfg.get("weight_col") and pp_cfg.get("height_col"):
-        steps.append((
-            "bmi",
-            BMITransformer(
-                weight_col=pp_cfg["weight_col"],
-                height_col=pp_cfg["height_col"],
-                drop=pp_cfg.get("drop_original_columns", True),
-            ),
-        ))
+        steps.append(
+            (
+                "bmi",
+                BMITransformer(
+                    weight_col=pp_cfg["weight_col"],
+                    height_col=pp_cfg["height_col"],
+                    drop=pp_cfg.get("drop_original_columns", True),
+                ),
+            )
+        )
 
     if col_list := pp_cfg.get("interaction_columns", []):
         steps.append(("interactions", InteractionFeatures(col_list)))
 
     if out_cols := pp_cfg.get("outlier_columns", []):
-        steps.append((
-            "outlier_flags",
-            OutlierFlagger(
-                columns=out_cols,
-                z_thresh=pp_cfg.get("z_threshold", 3.0),
-            ),
-        ))
+        steps.append(
+            (
+                "outlier_flags",
+                OutlierFlagger(
+                    columns=out_cols,
+                    z_thresh=pp_cfg.get("z_threshold", 3.0),
+                ),
+            )
+        )
 
     if dt_col := pp_cfg.get("datetime_column"):
         steps.append(("datetime_feats", DateTimeFeatures(dt_col)))
@@ -129,14 +138,16 @@ def build_preprocessing_pipeline(config: Dict) -> Pipeline:
         elif scaler == "standard":
             num_steps.append(("scaler", StandardScaler()))
         if col_cfg.get("bucketize", False):
-            num_steps.append((
-                "bucketize",
-                KBinsDiscretizer(
-                    n_bins=col_cfg.get("n_buckets", 4),
-                    encode="onehot-dense",
-                    strategy="quantile",
-                ),
-            ))
+            num_steps.append(
+                (
+                    "bucketize",
+                    KBinsDiscretizer(
+                        n_bins=col_cfg.get("n_buckets", 4),
+                        encode="onehot-dense",
+                        strategy="quantile",
+                    ),
+                )
+            )
         if num_steps:
             transformers.append((f"{col}_num", Pipeline(num_steps), [col]))
 
@@ -149,15 +160,23 @@ def build_preprocessing_pipeline(config: Dict) -> Pipeline:
             cat_steps.append(("imputer", SimpleImputer(strategy=strategy)))
         encoding = col_cfg.get("encoding", "onehot")
         if encoding == "onehot":
-            cat_steps.append((
-                "encoder",
-                OneHotEncoder(sparse_output=False, handle_unknown="ignore"),
-            ))
+            cat_steps.append(
+                (
+                    "encoder",
+                    OneHotEncoder(
+                        sparse_output=False, handle_unknown="ignore"
+                    ),
+                )
+            )
         elif encoding == "ordinal":
-            cat_steps.append((
-                "encoder",
-                OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
-            ))
+            cat_steps.append(
+                (
+                    "encoder",
+                    OrdinalEncoder(
+                        handle_unknown="use_encoded_value", unknown_value=-1
+                    ),
+                )
+            )
         if cat_steps:
             transformers.append((f"{col}_cat", Pipeline(cat_steps), [col]))
 
@@ -195,7 +214,9 @@ def get_output_feature_names(
         model training, feature importance, and interpretability.
     """
     feature_names: List[str] = []
-    col_transform: ColumnTransformer = preprocessor.named_steps["col_transform"]
+    col_transform: ColumnTransformer = preprocessor.named_steps[
+        "col_transform"
+    ]
 
     for _, transformer, cols in col_transform.transformers_:
         if transformer == "drop":
@@ -225,12 +246,9 @@ def get_output_feature_names(
     return feature_names
 
 
-def run_preprocessing_pipeline(
-    df: pd.DataFrame,
-    config: Dict
-) -> pd.DataFrame:
+def run_preprocessing_pipeline(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
     """
-    Convenience wrapper: build, fit, transform raw DataFrame → DataFrame with named columns.
+    Run full preprocessing pipeline on raw DataFrame and return transformed DataFrame.
 
     WHY:
         Provides a single-call interface for transforming raw inputs into a clean
@@ -275,7 +293,12 @@ if __name__ == "__main__":
             logger.error("Raw data file not found: %s", raw_data_path)
             sys.exit(1)
         df_raw = pd.read_excel(raw_data_path)
-        logger.info("Loaded raw data: %s (rows=%d, cols=%d)", raw_data_path, df_raw.shape[0], df_raw.shape[1])
+        logger.info(
+            "Loaded raw data: %s (rows=%d, cols=%d)",
+            raw_data_path,
+            df_raw.shape[0],
+            df_raw.shape[1],
+        )
 
         # 2. Load YAML config
         if not config_path.is_file():
@@ -287,7 +310,9 @@ if __name__ == "__main__":
 
         # 3. Apply preprocessing pipeline
         df_processed = run_preprocessing_pipeline(df_raw, config)
-        logger.info("Preprocessing complete; processed shape: %s", df_processed.shape)
+        logger.info(
+            "Preprocessing complete; processed shape: %s", df_processed.shape
+        )
 
         # 4. Ensure output directory exists: data/processed/
         project_root = Path(__file__).resolve().parents[2]

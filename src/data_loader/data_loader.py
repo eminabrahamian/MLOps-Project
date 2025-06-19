@@ -1,12 +1,12 @@
 """
-src/data_loader/run.py
-
 Supports CSV and Excel sources with header, sheet, and encoding options.
+
 Provides robust logging, error handling, and custom exceptions.
 """
 
 import logging
 from pathlib import Path
+
 import pandas as pd
 import yaml
 
@@ -31,8 +31,7 @@ def load_config(config_path: Path = None) -> dict:
     """
     if config_path is None:
         config_path = (
-            Path(__file__).resolve()
-            .parents[2]  # project root
+            Path(__file__).resolve().parents[2]  # project root
             / "configs"
             / "config.yaml"
         )
@@ -61,15 +60,14 @@ def setup_logger(cfg: dict) -> logging.Logger:
     level = getattr(logging, cfg.get("level", "INFO").upper(), logging.INFO)
     # compute repo root by ascending two folders from this module
     module_path = Path(__file__).resolve()
-    repo_root   = module_path.parents[2]  # MLOps/
+    repo_root = module_path.parents[2]  # MLOps/
     # now join the configured log path under the repo root
-    log_file    = repo_root / cfg.get("log_file", "logs/main.log")
+    log_file = repo_root / cfg.get("log_file", "logs/main.log")
     # ensure the logs/ folder exists
     log_file.parent.mkdir(parents=True, exist_ok=True)
 
     fmt = cfg.get(
-        "format",
-        "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+        "format", "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
     )
     datefmt = cfg.get("datefmt", None)
 
@@ -82,7 +80,7 @@ def setup_logger(cfg: dict) -> logging.Logger:
         filename=log_file,
         filemode="a",
         format=fmt,
-        datefmt=datefmt
+        datefmt=datefmt,
     )
 
     # console handler at WARNING level
@@ -130,9 +128,7 @@ def load_data_source(ds_cfg: dict) -> pd.DataFrame:
         else:
             raise DataLoaderError(f"Unsupported data type: {typ}")
 
-        logger.info(
-            "Loaded data; rows=%d, cols=%d", df.shape[0], df.shape[1]
-        )
+        logger.info("Loaded data; rows=%d, cols=%d", df.shape[0], df.shape[1])
         return df
 
     except Exception as e:

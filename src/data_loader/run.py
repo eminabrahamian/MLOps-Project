@@ -1,7 +1,7 @@
 """
-src/data_loader/run.py
+Hydra‐driven data‐loading step.
 
-Hydra‐driven data‐loading step with robust try/except, structured logging,
+Robust try/except, structured logging,
 and optional artifact tracking via Weights & Biases.
 
 This script ties together:
@@ -11,24 +11,29 @@ This script ties together:
 """
 
 import sys
-from pathlib import Path
 from datetime import datetime
-import hydra
-import wandb
-from omegaconf import DictConfig
-from dotenv import load_dotenv
+from pathlib import Path
 
-from data_loader import setup_logger, load_data, DataLoaderError
+import hydra
+from dotenv import load_dotenv
+from omegaconf import DictConfig
+
+import wandb
+from data_loader import DataLoaderError, load_data, setup_logger
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-@hydra.main(config_path="../../configs", config_name="config", version_base=None)
+
+@hydra.main(
+    config_path="../../configs", config_name="config", version_base=None
+)
 def main(cfg: DictConfig) -> None:
     """
-    Entry point: python run.py
+    Entry point to load the data.
 
     Expects in configs/config.yaml:
-      data_source, logging, data_load (options), wandb (project/entity), env_file
+      data_source, logging, data_load (options),
+      wandb (project/entity), env_file
     """
     # 1) Set up structured logging
     logger = setup_logger(cfg.logging)
@@ -39,7 +44,7 @@ def main(cfg: DictConfig) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     raw_path_cfg = Path(cfg.data_source.raw_path)
-    resolved_raw_path = (PROJECT_ROOT/raw_path_cfg).resolve()
+    resolved_raw_path = (PROJECT_ROOT / raw_path_cfg).resolve()
 
     if not resolved_raw_path.is_file():
         raise FileNotFoundError(f"Data file not found: {resolved_raw_path}")
@@ -60,29 +65,40 @@ def main(cfg: DictConfig) -> None:
         run = wandb.init(
             project=cfg.main.wandb.project,
             entity=cfg.main.wandb.entity,
-            name=f"data_loader_{datetime.now():%Y%m%d_%H%M%S}_{resolved_raw_path.name}",
+            name=f"data_loader_{datetime.now():%Y%m%d_%H%M%S}_\
+                {resolved_raw_path.name}",
             config=dict(cfg),
             job_type="data_load",
-            tags=["data_loader", resolved_raw_path.name]
+            tags=["data_loader", resolved_raw_path.name],
         )
-        logger.info("Initialized W&B run: %s/%s", cfg.main.wandb.project, run.name)
+        logger.info(
+            "Initialized W&B run: %s/%s", cfg.main.wandb.project, run.name
+        )
 
         # 4) Load data using your data_loader pipeline
         df = load_data()
         if df.empty:
-            raise DataLoaderError("Loaded DataFrame is empty. Check your data source.")
+            raise DataLoaderError(
+                "Loaded DataFrame is empty." " Check your data source."
+            )
         n_rows, n_cols = df.shape
-        logger.info("Data loaded successfully: %d rows, %d cols", n_rows, n_cols)
+        logger.info(
+            "Data loaded successfully: %d rows, %d cols", n_rows, n_cols
+        )
 
         duplicate_count = df.duplicated().sum()
         if duplicate_count > 0:
             logger.warning(
-                "%d duplicates found in data. Consider removing " \
-                "them before moving forward.", duplicate_count)
+                "%d duplicates found in data. Consider removing "
+                "them before moving forward.",
+                duplicate_count,
+            )
 
         # 5) Log basic metrics
         if run:
-            wandb.log({"n_rows": n_rows, "n_cols": n_cols, "shape": list(df.shape)})
+            wandb.log(
+                {"n_rows": n_rows, "n_cols": n_cols, "shape": list(df.shape)}
+            )
 
         # 6) Optionally log a sample of the data
         if cfg.data_load.get("log_sample", True) and run:
@@ -98,12 +114,14 @@ def main(cfg: DictConfig) -> None:
             run.log_artifact(artifact, aliases=["latest"])
             logger.info("Logged raw data artifact: %s", resolved_raw_path.name)
 
-        wandb.summary.update({
-            "n_rows": n_rows,
-            "n_cols": n_cols,
-            "n_duplicates": duplicate_count,
-            "columns": list(df.columns)
-        })
+        wandb.summary.update(
+            {
+                "n_rows": n_rows,
+                "n_cols": n_cols,
+                "n_duplicates": duplicate_count,
+                "columns": list(df.columns),
+            }
+        )
 
     except DataLoaderError as e:
         logger.error("DataLoaderError: %s", e)

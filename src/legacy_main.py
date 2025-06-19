@@ -1,18 +1,19 @@
 """
-src/main.py
-
-Single entry‐point that orchestrates every stage of the MLOps pipeline:
+Single entry‐point that orchestrates every stage of the MLOps pipeline.
 
 1. Data stage:
    • Loads raw data using src.data_loader.data_loader.load_data()
-   • Runs schema & quality checks using src.data_loader.data_validator.validate_data()
+   • Runs schema & quality checks using
+     src.data_loader.data_validator.validate_data()
 
 2. Training stage:
-   • Builds preprocessing + splits + trains model via src.model.model.run_model_pipeline()
+   • Builds preprocessing + splits + trains model via
+     src.model.model.run_model_pipeline()
    • Evaluation (metrics) happen inside the model pipeline
 
 3. Inference stage:
-   • Applies persisted preprocessing pipeline + model to new data via src.inference.inference.run_inference()
+   • Applies persisted preprocessing pipeline + model to
+     new data via src.inference.inference.run_inference()
 
 Usage Examples:
     # Full rebuild (data + train):
@@ -37,14 +38,14 @@ import sys
 from pathlib import Path
 from typing import Dict
 
-import yaml
 import pandas as pd
+import yaml
 
 # ── Corrected Imports (include 'src.' prefix) ──────────────────────────────
 from src.data_loader.data_loader import load_data
 from src.data_validator.data_validator import validate_data
-from src.models.model import run_model_pipeline
 from src.inference.inference import run_inference
+from src.model.model import run_model_pipeline
 
 
 def _setup_logging(log_cfg: Dict[str, str]) -> None:
@@ -103,6 +104,13 @@ def _load_config(path: str) -> dict:
 
 
 def main() -> None:
+    """
+    Run the MLOps pipeline entry point.
+
+    Parses command-line arguments to determine the pipeline stage to run
+    (data loading, training, or inference), loads the config file, sets
+    up logging, and executes the corresponding processing logic.
+    """
     parser = argparse.ArgumentParser(description="MLOps pipeline orchestrator")
     parser.add_argument(
         "--config",
@@ -163,7 +171,9 @@ def main() -> None:
         # ── Inference Stage ──────────────────────────────────────────────
         if args.stage == "infer":
             if not args.input_csv or not args.output_csv:
-                logger.error("Inference stage requires --input_csv and --output_csv")
+                logger.error(
+                    "Inference stage requires" " --input_csv and --output_csv"
+                )
                 sys.exit(1)
 
             try:
@@ -183,9 +193,13 @@ def main() -> None:
                 input_path=args.input_csv,
                 config_path=args.config,
                 output_path=args.output_csv,
-                return_proba=config.get("inference", {}).get("return_proba", False),
+                return_proba=config.get("inference", {}).get(
+                    "return_proba", False
+                ),
             )
-            logger.info("Batch inference completed | output=%s", args.output_csv)
+            logger.info(
+                "Batch inference completed | output=%s", args.output_csv
+            )
 
     except Exception as exc:
         logger.exception("Pipeline failed: %s", exc)

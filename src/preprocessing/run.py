@@ -1,35 +1,37 @@
 """
-src/preprocessing/run.py
-
 Hydra-driven, MLflow-invokable preprocessing step.
+
 Fetches the cleaned dataset from W&B, builds & applies the preprocessing pipeline,
 writes processed splits, and logs them as W&B artifacts.
 """
-import sys
-import tempfile
-from pathlib import Path
-from datetime import datetime
-import logging
-
-import pandas as pd
-from omegaconf import DictConfig, OmegaConf
-from dotenv import load_dotenv
-from sklearn.model_selection import train_test_split
-
-import hydra
-
-# Ensure the src directory is in the Python path
-PROJECT_ROOT = Path(__file__).resolve().parents[2]       # …/MLOps
-sys.path.insert(0, str(PROJECT_ROOT))
 
 from preprocessing import (
     build_preprocessing_pipeline,
     get_output_feature_names,
 )
-
 import wandb
+import logging
+import sys
+import tempfile
+from datetime import datetime
+from pathlib import Path
 
-@hydra.main(config_path=str(PROJECT_ROOT / "configs"), config_name="config", version_base=None)
+import hydra
+import pandas as pd
+from dotenv import load_dotenv
+from omegaconf import DictConfig, OmegaConf
+from sklearn.model_selection import train_test_split
+
+# Ensure the src directory is in the Python path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]  # …/MLOps
+sys.path.insert(0, str(PROJECT_ROOT))
+
+
+@hydra.main(
+    config_path=str(PROJECT_ROOT / "configs"),
+    config_name="config",
+    version_base=None,
+)
 def main(cfg: DictConfig) -> None:
     """
     Orchestrate the preprocessing step with Hydra and Weights & Biases.
@@ -43,7 +45,6 @@ def main(cfg: DictConfig) -> None:
     Includes structured logging, robust error handling, and configurable
     data paths via the Hydra config.
     """
-
     # 1) Load any .env (if present)
     env_file = PROJECT_ROOT / cfg.get("env_file", ".env")
     if env_file.is_file():
@@ -87,7 +88,9 @@ def main(cfg: DictConfig) -> None:
         cfg_dict = OmegaConf.to_container(cfg, resolve=True)
         pipeline = build_preprocessing_pipeline(cfg_dict["preprocessing"])
         X = pipeline.fit_transform(df)
-        cols = get_output_feature_names(pipeline, df.columns.tolist(), cfg_dict)
+        cols = get_output_feature_names(
+            pipeline, df.columns.tolist(), cfg_dict
+        )
         df_proc = pd.DataFrame(X, columns=cols)
         df_proc[cfg.target] = df[cfg.target]
 
@@ -140,6 +143,7 @@ def main(cfg: DictConfig) -> None:
         if run:
             run.finish()
             logger.info("W&B run closed")
+
 
 if __name__ == "__main__":
     # Hydra will supply the `cfg` at runtime — ignore the lint warning here
