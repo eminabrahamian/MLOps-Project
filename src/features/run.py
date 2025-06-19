@@ -56,8 +56,8 @@ def main(cfg: DictConfig) -> None:
     try:
         # 1) Start W&B
         run = wandb.init(
-            project=cfg.main.WANDB_PROJECT,
-            entity=cfg.main.WANDB_ENTITY,
+            project=cfg.main.wandb.project,
+            entity=cfg.main.wandb.entity,
             job_type="features",
             name=run_name,
             config=cfg_dict,
