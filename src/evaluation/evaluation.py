@@ -42,7 +42,7 @@ def _specificity(tn: int, fp: int) -> float:
 def _npv(tn: int, fn: int) -> float:
     """
     Compute negative predictive value: TN / (TN + FN).
-    
+
     Return NaN if denominator is zero.
 
     WHY:

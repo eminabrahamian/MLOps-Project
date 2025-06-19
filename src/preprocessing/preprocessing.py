@@ -48,7 +48,7 @@ class ColumnRenamer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, rename_map: dict | None = None):
-        """Initialize ColumnRenamer with a dictionary mapping old to new column names."""
+        """Initialize function with dict mapping old to new column names."""
         self.rename_map = rename_map or {}
 
     def fit(self, X: pd.DataFrame, y=None):
@@ -66,7 +66,8 @@ def build_preprocessing_pipeline(config: Dict) -> Pipeline:
 
     The pipeline steps (in order) are:
       1. RiskScore (always applied)
-      2. Optional: BMI, Interaction, Outlier, DateTime transformers (config-driven)
+      2. Optional: BMI, Interaction, Outlier,
+         DateTime transformers (config-driven)
       3. ColumnRenamer
       4. ColumnTransformer for numeric, categorical, passthrough
 
@@ -248,11 +249,12 @@ def get_output_feature_names(
 
 def run_preprocessing_pipeline(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
     """
-    Run full preprocessing pipeline on raw DataFrame and return transformed DataFrame.
+    Run preprocessing pipeline on raw DF and return transformed DataFrame.
 
     WHY:
-        Provides a single-call interface for transforming raw inputs into a clean
-        DataFrame ready for modeling or export.
+        Provides a single-call interface for transforming
+        raw inputs into a clean DataFrame ready for
+        modeling or export.
     """
     pipeline = build_preprocessing_pipeline(config)
     arr = pipeline.fit_transform(df)
@@ -262,13 +264,14 @@ def run_preprocessing_pipeline(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
 
 if __name__ == "__main__":
     """
-    Standalone CLI for preprocessing.
+    Run the preprocessing pipeline from the command line.
 
         python -m src.preprocessing.preprocessing <raw_data.xlsx> <config.yaml>
 
     WHY:
         Allows ad-hoc preprocessing runs without writing additional scripts.
-        Saves transformed data to data/processed/ for reproducibility and future use.
+        Saves transformed data to data/processed/ for reproducibility
+        and future use.
     """
     import yaml
 
@@ -280,7 +283,8 @@ if __name__ == "__main__":
 
     if len(sys.argv) != 3:
         logger.error(
-            "Usage: python -m src.preprocessing.preprocessing <raw_data.xlsx> <config.yaml>"
+            "Usage: python -m src.preprocessing.preprocessing"
+            " <raw_data.xlsx> <config.yaml>"
         )
         sys.exit(1)
 

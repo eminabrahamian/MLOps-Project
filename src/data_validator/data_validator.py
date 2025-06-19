@@ -205,7 +205,7 @@ def _validate_column(
 
 def validate_data(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     """
-    Load validation rules, execute column checks, generate report, and handle errors.
+    Execute data validation checks in their entirety.
 
     WHY:
         Enforcing data contracts early prevents garbage data from flowing
@@ -272,7 +272,7 @@ def validate_data(df: pd.DataFrame, config: Dict[str, Any]) -> None:
 def main() -> None:
     """
     Run the data validator from the command line.
-    
+
     CLI entry: python -m src.data.data_validator <data.xlsx> <config.yaml>
 
     WHY:

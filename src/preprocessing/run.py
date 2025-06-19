@@ -1,8 +1,9 @@
 """
 Hydra-driven, MLflow-invokable preprocessing step.
 
-Fetches the cleaned dataset from W&B, builds & applies the preprocessing pipeline,
-writes processed splits, and logs them as W&B artifacts.
+Fetches the cleaned dataset from W&B, builds & applies the
+preprocessing pipeline, writes processed splits, and logs
+them as W&B artifacts.
 """
 
 from preprocessing import (

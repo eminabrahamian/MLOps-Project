@@ -61,7 +61,7 @@ class BMITransformer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, weight_col: str, height_col: str, drop: bool = True):
-        """Initialize BMITransformer with weight/height column names and drop flag."""
+        """Initialize with weight/height column names and drop flag."""
         self.weight_col = weight_col
         self.height_col = height_col
         self.drop = drop
@@ -96,7 +96,7 @@ class InteractionFeatures(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, columns: list[str]):
-        """Initialize with a list of columns to create interaction terms from."""
+        """Initialize with list of columns to create interaction terms from."""
         self.columns = columns
         self.pairs_ = []
 
@@ -106,7 +106,7 @@ class InteractionFeatures(BaseEstimator, TransformerMixin):
         self.pairs_ = [
             (i, j)
             for idx, i in enumerate(self.columns)
-            for j in self.columns[idx + 1 :]
+            for j in self.columns[idx + 1:]
         ]
         return self
 
@@ -134,7 +134,7 @@ class OutlierFlagger(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, columns: list[str], z_thresh: float = 3.0):
-        """Initialize OutlierFlagger with columns to check and z-score threshold."""
+        """Initialize function with columns to check and z-score threshold."""
         self.columns = columns
         self.z_thresh = z_thresh
         self.means_ = {}
@@ -180,7 +180,7 @@ class DateTimeFeatures(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Extract day, month, hour, and cyclical encodings from datetime column."""
+        """Extract D, M, H, and cyclical encodings from datetime column."""
         X = X.copy()
         dt = pd.to_datetime(X[self.datetime_col], errors="coerce")
         # Basic extractions

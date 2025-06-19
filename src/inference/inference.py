@@ -274,7 +274,7 @@ def run_inference(
 ) -> None:
     """
     End-to-end inference pipeline.
-    
+
       1. Load config and set up logging
       2. Load preprocessing pipeline and model
       3. Read raw data and apply preprocessing
