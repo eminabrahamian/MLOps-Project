@@ -54,8 +54,8 @@ def main(cfg: DictConfig) -> None:
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_name = f"inference_{ts}"
     run = wandb.init(
-        project=cfg.main.WANDB_PROJECT,
-        entity=cfg.main.WANDB_ENTITY,
+        project=cfg.main.wandb.project,
+        entity=cfg.main.wandb.entity,
         job_type="inference",
         name=run_name,
         config=cfg_dict,
