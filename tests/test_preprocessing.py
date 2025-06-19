@@ -5,30 +5,27 @@ Unit tests for preprocessing.py
 
 Covers:
 - ColumnRenamer (rename, no-op)
-- build_preprocessing_pipeline (with various config keys: default, BMI, interaction, outlier, datetime)
+- build_preprocessing_pipeline (with various config keys:
+  default, BMI, interaction, outlier, datetime)
 - get_output_feature_names (one-hot, bucket, passthrough)
-- run_preprocessing_pipeline integration (fits and transforms, resulting DataFrame)
+- run_preprocessing_pipeline integration
+  (fits and transforms, resulting DataFrame)
 """
-
-import logging
-import sys
-from pathlib import Path
-from datetime import datetime
-
-import pandas as pd
-import pytest
-import yaml
-
-from preprocessing.preprocessing import (
-    ColumnRenamer,
-    build_preprocessing_pipeline,
-    get_output_feature_names,
-    run_preprocessing_pipeline,
-)
 
 # Disable sklearn warnings in tests
 import warnings
+
+import pandas as pd
+import pytest
+
+from src.preprocessing.preprocessing import (
+    ColumnRenamer,
+    build_preprocessing_pipeline,
+    run_preprocessing_pipeline,
+)
+
 warnings.filterwarnings("ignore", category=UserWarning)
+
 
 @pytest.fixture
 def simple_df():
@@ -40,20 +37,23 @@ def simple_df():
       - 'weight', 'height': for BMITransformer
       - 'date': for DateTimeFeatures
     """
-    return pd.DataFrame({
-        "num": [1.0, 2.0, None, 4.0],
-        "cat": ["a", "b", None, "b"],
-        "weight": [70, 80, 90, 60],
-        "height": [175, 180, 165, 170],
-        "flag1": [1, 0, 1, 0],
-        "flag2": [0, 1, 0, 1],
-        "date": [
-            "2021-01-01 10:00:00",
-            "2021-06-15 15:30:00",
-            None,
-            "2021-12-31 23:59:59"
-        ]
-    })
+    return pd.DataFrame(
+        {
+            "num": [1.0, 2.0, None, 4.0],
+            "cat": ["a", "b", None, "b"],
+            "weight": [70, 80, 90, 60],
+            "height": [175, 180, 165, 170],
+            "flag1": [1, 0, 1, 0],
+            "flag2": [0, 1, 0, 1],
+            "date": [
+                "2021-01-01 10:00:00",
+                "2021-06-15 15:30:00",
+                None,
+                "2021-12-31 23:59:59",
+            ],
+        }
+    )
+
 
 @pytest.fixture
 def minimal_config(tmp_path):
@@ -76,17 +76,27 @@ def minimal_config(tmp_path):
             "outlier_columns": [],
             "z_threshold": 3.0,
             "datetime_column": None,
-            "num": {"impute": True, "imputer_strategy": "mean", "scaler": "minmax", "bucketize": False},
-            "cat": {"impute": True, "imputer_strategy": "most_frequent", "encoding": "onehot"}
+            "num": {
+                "impute": True,
+                "imputer_strategy": "mean",
+                "scaler": "minmax",
+                "bucketize": False,
+            },
+            "cat": {
+                "impute": True,
+                "imputer_strategy": "most_frequent",
+                "encoding": "onehot",
+            },
         },
         "features": {
             "continuous": ["num"],
             "categorical": ["cat"],
             "feature_columns": ["num", "cat"],
         },
-        "raw_features": ["num", "cat"]
+        "raw_features": ["num", "cat"],
     }
     return cfg
+
 
 def test_column_renamer_noop():
     """
@@ -97,6 +107,7 @@ def test_column_renamer_noop():
     out = ren.transform(df)
     pd.testing.assert_frame_equal(out, df)
 
+
 def test_column_renamer_mapping():
     """
     ColumnRenamer should rename columns according to rename_map.
@@ -105,6 +116,7 @@ def test_column_renamer_mapping():
     ren = ColumnRenamer({"old": "new"})
     out = ren.transform(df)
     assert "new" in out.columns and "old" not in out.columns
+
 
 def test_build_pipeline_minimal(minimal_config):
     """
@@ -121,10 +133,12 @@ def test_build_pipeline_minimal(minimal_config):
     assert "rename" in names
     assert "col_transform" in names
 
+
 def test_run_preprocessing_pipeline_integration(minimal_config, tmp_path):
     """
-    run_preprocessing_pipeline should fit & transform, returning a DataFrame with named columns.
-    Also, writing to data/processed/ is tested by verifying the file.
+    run_preprocessing_pipeline should fit & transform, returning a
+    DataFrame with named columns. Also, writing to data/processed/
+    is tested by verifying the file.
     """
     # Build a small DataFrame
     df = pd.DataFrame({"num": [1.0, None, 3.0], "cat": ["x", "y", "x"]})
@@ -133,20 +147,23 @@ def test_run_preprocessing_pipeline_integration(minimal_config, tmp_path):
     # Call run_preprocessing_pipeline
     df_processed = run_preprocessing_pipeline(df, cfg)
 
-    # Should produce a DataFrame of shape (3, 3) (1 scaled numeric + 2 one-hot cat columns)
+    # Should produce a DataFrame of shape (3, 3) (1 scaled numeric + 2 one-hot
+    # cat columns)
     assert df_processed.shape[0] == 3
     # Check that there are no missing values after imputation
     assert not df_processed.isnull().any().any()
     """
     Test a pipeline that includes BMITransformer and DateTimeFeatures.
     """
-    data = pd.DataFrame({
-        "num": [1.0, 2.0],
-        "cat": ["a", "b"],
-        "weight": [60, 80],
-        "height": [160, 180],
-        "date": ["2020-01-01 00:00:00", "2020-06-15 12:00:00"]
-    })
+    data = pd.DataFrame(
+        {
+            "num": [1.0, 2.0],
+            "cat": ["a", "b"],
+            "weight": [60, 80],
+            "height": [160, 180],
+            "date": ["2020-01-01 00:00:00", "2020-06-15 12:00:00"],
+        }
+    )
     cfg = {
         "preprocessing": {
             "rename_columns": {},
@@ -157,22 +174,32 @@ def test_run_preprocessing_pipeline_integration(minimal_config, tmp_path):
             "outlier_columns": [],
             "z_threshold": 3.0,
             "datetime_column": "date",
-            "num": {"impute": True, "imputer_strategy": "mean", "scaler": "standard", "bucketize": False},
-            "cat": {"impute": True, "imputer_strategy": "most_frequent", "encoding": "ordinal"}
+            "num": {
+                "impute": True,
+                "imputer_strategy": "mean",
+                "scaler": "standard",
+                "bucketize": False,
+            },
+            "cat": {
+                "impute": True,
+                "imputer_strategy": "most_frequent",
+                "encoding": "ordinal",
+            },
         },
         "features": {
             "continuous": ["num", "weight", "height"],
             "categorical": ["cat"],
-            "feature_columns": ["num", "weight", "height", "cat"]
+            "feature_columns": ["num", "weight", "height", "cat"],
         },
-        "raw_features": ["num", "weight", "height", "cat", "date"]
+        "raw_features": ["num", "weight", "height", "cat", "date"],
     }
     pipe = build_preprocessing_pipeline(cfg)
     arr = pipe.fit_transform(data)
-    # Expect shape: 
+    # Expect shape:
     # - num standardized → 1 column
     # - weight, height standardized → 2 columns
     # - cat ordinal → 1 column
-    # - DateTimeFeatures will add 5 columns: day_of_week, month, hour, hour_sin, hour_cos
+    # - DateTimeFeatures will add 5 columns: day_of_week,
+    #   month, hour, hour_sin, hour_cos
     # Total output columns: 1+2+1+5 = 9
     assert arr.shape == (2, 9)

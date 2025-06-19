@@ -8,17 +8,19 @@ Covers:
 - setup_logger (creates log file, resets handlers)
 - load_model/pipeline (missing file, invalid pickle)
 - get_data (CSV, Excel, missing file, unsupported suffix)
-- preprocess_inference_data (missing features, NumPy array input, DataFrame input)
-- make_predictions (model with/without predict_proba, return_proba True/False)
-- save_predictions (array only, tuple (preds,probs), directory creation)
-- run_inference (happy-path with temp pipeline & model; error paths for missing config keys)
+- preprocess_inference_data (missing features,
+  NumPy array input, DataFrame input)
+- make_predictions (model with/without predict_proba,
+  return_proba True/False)
+- save_predictions (array only, tuple (preds,probs),
+  directory creation)
+- run_inference (happy-path with temp pipeline & model;
+  error paths for missing config keys)
 """
 
-import os
-import pickle
-import tempfile
-from pathlib import Path
 import logging
+import pickle
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -26,17 +28,18 @@ import pytest
 import yaml
 
 from src.inference.inference import (
+    InferenceError,
+    get_data,
     load_config,
-    setup_logger,
     load_model,
     load_pipeline,
-    get_data,
-    preprocess_inference_data,
     make_predictions,
-    save_predictions,
+    preprocess_inference_data,
     run_inference,
-    InferenceError,
+    save_predictions,
+    setup_logger,
 )
+
 
 # Dummy pipeline: identity transform
 class DummyPipeline:
@@ -52,7 +55,10 @@ class DummyPipeline:
         self.fitted = True
         return X.values  # return array
 
+
 # Dummy model: similar to DummyBinaryClassifier in evaluation tests
+
+
 class DummyModel:
     def __init__(self, proba=False):
         self.proba = proba
@@ -63,6 +69,7 @@ class DummyModel:
     def predict_proba(self, X):
         # return equal class probabilities
         return np.tile([0.5, 0.5], (X.shape[0], 1))
+
 
 @pytest.fixture
 def temp_inference_artifacts(tmp_path):
@@ -86,18 +93,19 @@ def temp_inference_artifacts(tmp_path):
             "level": "INFO",
             "log_file": str(tmp_path / "inf.log"),
             "format": "%(levelname)s:%(message)s",
-            "datefmt": None
+            "datefmt": None,
         },
         "artifacts": {
             "preprocessing_pipeline": str(pipe_file),
-            "model_path": str(model_file)
+            "model_path": str(model_file),
         },
-        "raw_features": ["f1", "f2"]
+        "raw_features": ["f1", "f2"],
     }
     cfg_file = tmp_path / "config_inf.yaml"
     with cfg_file.open("w", encoding="utf-8") as f:
         yaml.safe_dump(cfg, f)
     return cfg_file, cfg, pipeline, model
+
 
 def test_load_config_missing(tmp_path):
     """
@@ -107,6 +115,7 @@ def test_load_config_missing(tmp_path):
     with pytest.raises(InferenceError) as excinfo:
         load_config(fake)
     assert "Config file not found" in str(excinfo.value)
+
 
 def test_load_config_invalid_yaml(tmp_path):
     """
@@ -118,9 +127,11 @@ def test_load_config_invalid_yaml(tmp_path):
         load_config(bad_yaml)
     assert "Invalid YAML" in str(excinfo.value)
 
+
 def test_setup_logger_creates_file(tmp_path, temp_inference_artifacts):
     """
-    setup_logger should create the specified log file and handle duplicate handlers.
+    setup_logger should create the specified log file and
+    handle duplicate handlers.
     """
     cfg_file, cfg, _, _ = temp_inference_artifacts
     setup_logger(cfg)
@@ -131,6 +142,7 @@ def test_setup_logger_creates_file(tmp_path, temp_inference_artifacts):
     log_path = Path(cfg["logging"]["log_file"])
     assert log_path.is_file()
 
+
 def test_load_model_missing(tmp_path):
     """
     load_model should raise InferenceError if model file is missing.
@@ -140,6 +152,7 @@ def test_load_model_missing(tmp_path):
         load_model(fake_model)
     assert "Model file not found" in str(excinfo.value)
 
+
 def test_load_pipeline_missing(tmp_path):
     """
     load_pipeline should raise InferenceError if pipeline file is missing.
@@ -148,6 +161,7 @@ def test_load_pipeline_missing(tmp_path):
     with pytest.raises(InferenceError) as excinfo:
         load_pipeline(fake_pipe)
     assert "Pipeline file not found" in str(excinfo.value)
+
 
 def test_get_data_csv_and_excel(tmp_path):
     """
@@ -174,9 +188,11 @@ def test_get_data_csv_and_excel(tmp_path):
         get_data(fake)
     assert "Unsupported data format" in str(excinfo.value)
 
+
 def test_preprocess_inference_data_missing_features(temp_inference_artifacts):
     """
-    preprocess_inference_data should raise if required_features are missing in DataFrame.
+    preprocess_inference_data should raise if
+    required_features are missing in DataFrame.
     """
     cfg_file, cfg, pipeline, model = temp_inference_artifacts
     # DataFrame missing 'f2'
@@ -185,9 +201,11 @@ def test_preprocess_inference_data_missing_features(temp_inference_artifacts):
         preprocess_inference_data(df, pipeline, ["f1", "f2"])
     assert "Missing required features" in str(excinfo.value)
 
+
 def test_preprocess_inference_data_ndarray_to_DF(temp_inference_artifacts):
     """
-    preprocess_inference_data should accept a NumPy array by converting to DataFrame.
+    preprocess_inference_data should accept a NumPy
+    array by converting to DataFrame.
     """
     _, cfg, pipeline, model = temp_inference_artifacts
     # Construct a small DataFrame with f1,f2 and convert to NumPy
@@ -197,27 +215,35 @@ def test_preprocess_inference_data_ndarray_to_DF(temp_inference_artifacts):
     assert isinstance(out, np.ndarray)
     assert out.shape == arr.shape
 
+
 def test_make_predictions_no_proba():
     """
     make_predictions should return only preds array if return_proba=False.
     """
+
     class SimpleModel:
         def predict(self, X):
             return np.ones(X.shape[0], dtype=int)
+
     mod = SimpleModel()
     X = np.zeros((3, 2))
     preds = make_predictions(mod, X, return_proba=False)
     assert isinstance(preds, np.ndarray) and preds.tolist() == [1, 1, 1]
 
+
 def test_make_predictions_with_proba():
     """
-    make_predictions should return (preds,probs) tuple if return_proba=True and model supports predict_proba.
+    make_predictions should return (preds,probs) tuple if
+    return_proba=True and model supports predict_proba.
     """
+
     class ProbaModel:
         def predict(self, X):
             return np.zeros(X.shape[0], dtype=int)
+
         def predict_proba(self, X):
             return np.tile([0.2, 0.8], (X.shape[0], 1))
+
     mod = ProbaModel()
     X = np.zeros((2, 2))
     preds, probs = make_predictions(mod, X, return_proba=True)
@@ -225,21 +251,24 @@ def test_make_predictions_with_proba():
     assert isinstance(probs, np.ndarray)
     assert probs.shape == (2, 2)
 
+
 def test_save_predictions_array_only(tmp_path):
     """
     save_predictions should write an Excel with only 'prediction' column.
     """
     preds = np.array([0, 1, 0])
     out_file = tmp_path / "preds.xlsx"
-    save_predictions(preds, out_file, data_index=[0,1,2])
+    save_predictions(preds, out_file, data_index=[0, 1, 2])
     assert out_file.is_file()
     df = pd.read_excel(out_file, index_col=0)
     assert "prediction" in df.columns
     assert df["prediction"].tolist() == [0, 1, 0]
 
+
 def test_save_predictions_with_probs(tmp_path):
     """
-    save_predictions should write an Excel with class probability columns and 'prediction'.
+    save_predictions should write an Excel with class
+    probability columns and 'prediction'.
     """
     preds = np.array([1, 0])
     probs = np.array([[0.1, 0.9], [0.8, 0.2]])
@@ -248,8 +277,11 @@ def test_save_predictions_with_probs(tmp_path):
     assert out_file.is_file()
     df = pd.read_excel(out_file, index_col=0)
     # Columns: class_0, class_1, prediction
-    assert all(col in df.columns for col in ["class_0", "class_1", "prediction"])
+    assert all(
+        col in df.columns for col in ["class_0", "class_1", "prediction"]
+    )
     assert df["prediction"].tolist() == [1, 0]
+
 
 def test_run_inference_happy_path(tmp_path, temp_inference_artifacts):
     """
@@ -268,9 +300,13 @@ def test_run_inference_happy_path(tmp_path, temp_inference_artifacts):
     run_inference(str(in_csv), str(cfg_file), str(out_xlsx), return_proba=True)
     assert out_xlsx.is_file()
 
-def test_run_inference_missing_pipeline_key(tmp_path, temp_inference_artifacts):
+
+def test_run_inference_missing_pipeline_key(
+    tmp_path, temp_inference_artifacts
+):
     """
-    run_inference should exit/raise if config missing 'artifacts.preprocessing_pipeline'.
+    run_inference should exit/raise if config missing
+    'artifacts.preprocessing_pipeline'.
     """
     cfg_file, cfg, pipeline, model = temp_inference_artifacts
     # Remove preprocessing_pipeline key
@@ -282,4 +318,9 @@ def test_run_inference_missing_pipeline_key(tmp_path, temp_inference_artifacts):
     pd.DataFrame({"f1": [0], "f2": [0]}).to_csv(in_csv, index=False)
 
     with pytest.raises(SystemExit):
-        run_inference(str(in_csv), str(cfg_file), str(tmp_path / "o.xlsx"), return_proba=False)
+        run_inference(
+            str(in_csv),
+            str(cfg_file),
+            str(tmp_path / "o.xlsx"),
+            return_proba=False,
+        )

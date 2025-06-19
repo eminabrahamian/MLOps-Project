@@ -11,21 +11,20 @@ Covers:
 """
 
 import logging
-import os
-import tempfile
-import yaml
 from pathlib import Path
 
 import pandas as pd
 import pytest
+import yaml
 
-from data_loader.data_loader import (
-    load_config,
-    setup_logger,
-    load_data_source,
-    load_data,
+from src.data_loader.data_loader import (
     DataLoaderError,
+    load_config,
+    load_data,
+    load_data_source,
+    setup_logger,
 )
+
 
 # Fixture: create a temporary config.yaml for testing
 @pytest.fixture
@@ -40,28 +39,31 @@ def temp_config(tmp_path):
             "level": "DEBUG",
             "log_file": str(tmp_path / "test.log"),
             "format": "%(levelname)s:%(message)s",
-            "datefmt": None
+            "datefmt": None,
         },
         "data_source": {
             "raw_path": str(tmp_path / "data.csv"),
             "type": "csv",
             "header": 0,
-            "encoding": "utf-8"
-        }
+            "encoding": "utf-8",
+        },
     }
     config_file = tmp_path / "config.yaml"
     with config_file.open("w", encoding="utf-8") as f:
         yaml.safe_dump(cfg, f)
     return config_file, cfg
 
+
 def test_load_config_missing(tmp_path):
     """
-    Test load_config raises DataLoaderError when the config file does not exist.
+    Test load_config raises DataLoaderError when
+    the config file does not exist.
     """
     fake_path = tmp_path / "nonexistent.yaml"
     with pytest.raises(DataLoaderError) as excinfo:
         load_config(fake_path)
     assert "Config file not found" in str(excinfo.value)
+
 
 def test_load_config_invalid_yaml(tmp_path):
     """
@@ -73,9 +75,11 @@ def test_load_config_invalid_yaml(tmp_path):
         load_config(bad_yaml)
     assert "Invalid YAML" in str(excinfo.value)
 
+
 def test_setup_logger_creates_file(tmp_path, temp_config):
     """
-    Test that setup_logger returns a logger and creates the log file when logging messages.
+    Test that setup_logger returns a logger and
+    creates the log file when logging messages.
     """
     config_file, cfg_dict = temp_config
     log_cfg = cfg_dict["logging"]
@@ -90,6 +94,7 @@ def test_setup_logger_creates_file(tmp_path, temp_config):
     content = log_path.read_text()
     assert "Test debug log" in content
 
+
 def test_load_data_source_csv(tmp_path, temp_config):
     """
     Test load_data_source can read a CSV with header and encoding correctly.
@@ -103,11 +108,12 @@ def test_load_data_source_csv(tmp_path, temp_config):
         "raw_path": str(csv_path),
         "type": "csv",
         "header": 0,
-        "encoding": "utf-8"
+        "encoding": "utf-8",
     }
     df_loaded = load_data_source(ds_cfg)
     # DataFrame equality check
     pd.testing.assert_frame_equal(df_loaded.reset_index(drop=True), df_orig)
+
 
 def test_load_data_source_excel(tmp_path):
     """
@@ -121,19 +127,26 @@ def test_load_data_source_excel(tmp_path):
         "type": "excel",
         "header": 0,
         "sheet_name": "Sheet1",
-        "encoding": None
+        "encoding": None,
     }
     df_loaded = load_data_source(ds_cfg)
     pd.testing.assert_frame_equal(df_loaded, df_orig)
+
 
 def test_load_data_source_missing_file(tmp_path):
     """
     Test load_data_source raises DataLoaderError when the file is missing.
     """
-    ds_cfg = {"raw_path": str(tmp_path / "no.csv"), "type": "csv", "header": 0, "encoding": "utf-8"}
+    ds_cfg = {
+        "raw_path": str(tmp_path / "no.csv"),
+        "type": "csv",
+        "header": 0,
+        "encoding": "utf-8",
+    }
     with pytest.raises(DataLoaderError) as excinfo:
         load_data_source(ds_cfg)
     assert "Data file not found" in str(excinfo.value)
+
 
 def test_load_data_source_unsupported_type(tmp_path):
     """
@@ -142,10 +155,16 @@ def test_load_data_source_unsupported_type(tmp_path):
     # Create a dummy CSV so path exists
     csv_path = tmp_path / "data2.csv"
     pd.DataFrame({"a": [1]}).to_csv(csv_path, index=False)
-    ds_cfg = {"raw_path": str(csv_path), "type": "txt", "header": 0, "encoding": "utf-8"}
+    ds_cfg = {
+        "raw_path": str(csv_path),
+        "type": "txt",
+        "header": 0,
+        "encoding": "utf-8",
+    }
     with pytest.raises(DataLoaderError) as excinfo:
         load_data_source(ds_cfg)
     assert "Unsupported data type" in str(excinfo.value)
+
 
 def test_load_data_integration(tmp_path, monkeypatch, temp_config):
     """
@@ -165,6 +184,7 @@ def test_load_data_integration(tmp_path, monkeypatch, temp_config):
     # Monkeypatch load_config to ignore default path
     def fake_load_config(arg=None):
         return cfg_dict
+
     monkeypatch.setattr("src.data.data_loader.load_config", fake_load_config)
 
     # Now call load_data; it should return df_test

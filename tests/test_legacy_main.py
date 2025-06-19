@@ -8,31 +8,37 @@ Covers:
 - _setup_logging: creates log file, resets handlers
 - main() with incorrect args (missing --stage), invalid stage, missing config
 - main() 'data' stage: monkeypatch load_data and validate_data
-- main() 'train' stage: monkeypatch load_data, validate_data, run_model_pipeline
+- main() 'train' stage: monkeypatch load_data, validate_data,
+  run_model_pipeline
 - main() 'infer' stage: monkeypatch pd.read_excel, validate_data, run_inference
 """
 
-import os
 import sys
-import tempfile
-import yaml
+
 import pandas as pd
 import pytest
-from pathlib import Path
+import yaml
 
 # Import the module under test
 from legacy_main import _load_config, _setup_logging, main
 
+
 # Helper to capture sys.exit calls
 class DummyExit(Exception):
     pass
+
 
 @pytest.fixture(autouse=True)
 def dummy_exit(monkeypatch):
     """
     Replace sys.exit with raising DummyExit for testing.
     """
-    monkeypatch.setattr(sys, "exit", lambda code=0: (_ for _ in ()).throw(DummyExit(f"exit: {code}")))
+    monkeypatch.setattr(
+        sys,
+        "exit",
+        lambda code=0: (_ for _ in ()).throw(DummyExit(f"exit: {code}")),
+    )
+
 
 def test_load_config_missing(tmp_path):
     """
@@ -40,6 +46,7 @@ def test_load_config_missing(tmp_path):
     """
     with pytest.raises(FileNotFoundError):
         _load_config(str(tmp_path / "no.yaml"))
+
 
 def test_load_config_invalid_yaml(tmp_path):
     """
@@ -50,20 +57,29 @@ def test_load_config_invalid_yaml(tmp_path):
     with pytest.raises(yaml.YAMLError):
         _load_config(str(bad))
 
+
 def test_setup_logging_creates_and_resets(tmp_path):
     """
-    _setup_logging should create log file directory and reset any existing handlers.
+    _setup_logging should create log file directory and
+    reset any existing handlers.
     """
     # Create a dummy config
     log_file = tmp_path / "logs" / "main.log"
-    cfg = {"level": "INFO", "log_file": str(log_file), "format": "%(message)s", "datefmt": None}
+    cfg = {
+        "level": "INFO",
+        "log_file": str(log_file),
+        "format": "%(message)s",
+        "datefmt": None,
+    }
     _setup_logging(cfg)
     # Emit a log
     import logging
+
     logger = logging.getLogger(__name__)
     logger.info("hello")
     # File should be created
     assert log_file.is_file()
+
 
 def test_main_missing_stage(tmp_path, monkeypatch, capsys):
     """
@@ -74,6 +90,7 @@ def test_main_missing_stage(tmp_path, monkeypatch, capsys):
     with pytest.raises(DummyExit):
         main()
 
+
 def test_main_invalid_config(tmp_path, monkeypatch):
     """
     Running main with a non-existent config file should cause exit.
@@ -83,12 +100,20 @@ def test_main_invalid_config(tmp_path, monkeypatch):
     with pytest.raises(DummyExit):
         main()
 
+
 def test_main_data_stage(monkeypatch, tmp_path):
     """
     Test 'data' stage by monkeypatching load_data and validate_data.
     """
     # Create a minimal config file
-    cfg = {"logging": {"level": "INFO", "log_file": str(tmp_path/"m.log"), "format": "%(message)s", "datefmt": None}}
+    cfg = {
+        "logging": {
+            "level": "INFO",
+            "log_file": str(tmp_path / "m.log"),
+            "format": "%(message)s",
+            "datefmt": None,
+        }
+    }
     cfg_file = tmp_path / "config.yaml"
     with cfg_file.open("w", encoding="utf-8") as f:
         yaml.safe_dump(cfg, f)
@@ -103,11 +128,20 @@ def test_main_data_stage(monkeypatch, tmp_path):
     # Should not raise
     main()
 
+
 def test_main_train_stage(monkeypatch, tmp_path):
     """
-    Test 'train' stage by monkeypatching load_data, validate_data, run_model_pipeline.
+    Test 'train' stage by monkeypatching load_data,
+    validate_data, run_model_pipeline.
     """
-    cfg = {"logging": {"level": "INFO", "log_file": str(tmp_path/"m2.log"), "format": "%(message)s", "datefmt": None}}
+    cfg = {
+        "logging": {
+            "level": "INFO",
+            "log_file": str(tmp_path / "m2.log"),
+            "format": "%(message)s",
+            "datefmt": None,
+        }
+    }
     cfg_file = tmp_path / "config2.yaml"
     with cfg_file.open("w", encoding="utf-8") as f:
         yaml.safe_dump(cfg, f)
@@ -121,13 +155,20 @@ def test_main_train_stage(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "argv", testargs)
     main()
 
+
 def test_main_infer_stage(monkeypatch, tmp_path):
     """
-    Test 'infer' stage by monkeypatching pd.read_excel, validate_data, run_inference.
+    Test 'infer' stage by monkeypatching pd.read_excel,
+    validate_data, run_inference.
     """
     cfg = {
-        "logging": {"level": "INFO", "log_file": str(tmp_path/"m3.log"), "format": "%(message)s", "datefmt": None},
-        "inference": {"return_proba": False}
+        "logging": {
+            "level": "INFO",
+            "log_file": str(tmp_path / "m3.log"),
+            "format": "%(message)s",
+            "datefmt": None,
+        },
+        "inference": {"return_proba": False},
     }
     cfg_file = tmp_path / "config3.yaml"
     with cfg_file.open("w", encoding="utf-8") as f:
@@ -145,10 +186,14 @@ def test_main_infer_stage(monkeypatch, tmp_path):
 
     testargs = [
         "prog",
-        "--config", str(cfg_file),
-        "--stage", "infer",
-        "--input_csv", str(inf_file),
-        "--output_csv", str(tmp_path / "out.xlsx")
+        "--config",
+        str(cfg_file),
+        "--stage",
+        "infer",
+        "--input_csv",
+        str(inf_file),
+        "--output_csv",
+        str(tmp_path / "out.xlsx"),
     ]
     monkeypatch.setattr(sys, "argv", testargs)
     main()
