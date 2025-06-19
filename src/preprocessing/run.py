@@ -6,7 +6,7 @@ preprocessing pipeline, writes processed splits, and logs
 them as W&B artifacts.
 """
 
-from preprocessing import (
+from preprocessing.preprocessing import (
     build_preprocessing_pipeline,
     get_output_feature_names,
 )

@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig
 
 import wandb
-from data_loader import DataLoaderError, load_data, setup_logger
+from data_loader.data_loader import DataLoaderError, load_data, setup_logger
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 

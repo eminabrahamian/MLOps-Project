@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 
 import wandb
-from evaluation import generate_split_report
+from evaluation.evaluation import generate_split_report
 
 # Resolve project root (two levels up from this file)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
