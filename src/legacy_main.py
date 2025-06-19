@@ -172,7 +172,7 @@ def main() -> None:
         if args.stage == "infer":
             if not args.input_csv or not args.output_csv:
                 logger.error(
-                    "Inference stage requires" " --input_csv and --output_csv"
+                    "Inference stage requires --input_csv and --output_csv"
                 )
                 sys.exit(1)
 
