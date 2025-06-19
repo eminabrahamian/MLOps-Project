@@ -25,6 +25,7 @@ import wandb
 PIPELINE_STEPS = [
     "data_loader",
     "data_validator",
+    "preprocessing",
     "model",
     "evaluation",
     "inference",

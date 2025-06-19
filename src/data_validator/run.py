@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 
 import wandb
-from data_validator.data_validator import setup_logger, validate_data
+from src.data_validator.data_validator import setup_logger, validate_data
 
 # Resolve project root (two levels up from this file)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
