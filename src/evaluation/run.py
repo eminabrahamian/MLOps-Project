@@ -6,6 +6,7 @@ and saves JSON reports and scalars to Weights & Biases.
 Includes structured logging, error handling, and configurable splits.
 """
 
+import sys
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -15,10 +16,10 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 
 import wandb
-from src.evaluation.evaluation import generate_split_report
 
-# Resolve project root (two levels up from this file)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(PROJECT_ROOT))
+from src.evaluation.evaluation import generate_split_report
 
 
 @hydra.main(

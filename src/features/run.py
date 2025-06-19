@@ -11,19 +11,16 @@ from datetime import datetime
 from pathlib import Path
 import tempfile
 
-import hydra
-import wandb
-from omegaconf import DictConfig, OmegaConf
 from dotenv import load_dotenv
 import pandas as pd
+from omegaconf import DictConfig, OmegaConf
 
-# ── Ensure your src/ package is on PYTHONPATH when MLflow spins up a new env
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SRC_ROOT = PROJECT_ROOT / "src"
-if str(SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(SRC_ROOT))
-
+sys.path.append(str(PROJECT_ROOT))
 from src.features.features import FEATURE_TRANSFORMERS
+
+import hydra
+import wandb
 
 # Load any .env keys (e.g. WANDB_API_KEY)
 load_dotenv()
@@ -36,7 +33,8 @@ logging.basicConfig(
 logger = logging.getLogger("features")
 
 
-@hydra.main(config_path=str(PROJECT_ROOT), config_name="config", version_base=None)
+@hydra.main(config_path=str(PROJECT_ROOT / "configs"),\
+            config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     """
     Entry point for feature engineering.
@@ -69,29 +67,32 @@ def main(cfg: DictConfig) -> None:
         val_art = run.use_artifact("validated_data:latest")
         with tempfile.TemporaryDirectory() as tmp_dir:
             art_dir = Path(val_art.download(root=tmp_dir))
-            csvs = list(art_dir.glob("*.csv"))
-            if not csvs:
-                logger.error("No CSV found in validated_data artifact")
-                run.alert(title="Feature Eng Error", text="Missing validated_data CSV")
+            excels = list(art_dir.glob("*.xlsx"))
+            if not excels:
+                logger.error("No Excel file (.xlsx) found in validated_data artifact")
+                run.alert(title="Feature Eng Error", text="Missing validated_data Excel file")
                 sys.exit(1)
-            df = pd.read_csv(csvs[0])
+            df = pd.read_excel(excels[0])
         if df.empty:
             logger.warning("Validated DataFrame is empty")
 
-        # 3) Apply transformers
+        # 3) Apply transformers (if enabled)
         applied = []
         params = {}
-        for feat in cfg.features.get("engineered", []):
-            builder = FEATURE_TRANSFORMERS.get(feat)
-            if builder is None:
-                logger.debug("Skipping unregistered transformer: %s", feat)
-                continue
-            transformer = builder(cfg_dict)
-            df = transformer.transform(df)
-            applied.append(feat)
-            if hasattr(transformer, "get_params"):
-                params[feat] = transformer.get_params()
-            logger.info("Applied transformer: %s", feat)
+        if not cfg.features.get("enabled", True):
+            logger.info("Feature engineering is disabled. Skipping all transformers.")
+        else:
+            for feat in cfg.features.get("engineered", []):
+                builder = FEATURE_TRANSFORMERS.get(feat)
+                if builder is None:
+                    logger.debug("Skipping unregistered transformer: %s", feat)
+                    continue
+                transformer = builder(cfg_dict)
+                df = transformer.transform(df)
+                applied.append(feat)
+                if hasattr(transformer, "get_params"):
+                    params[feat] = transformer.get_params()
+                logger.info("Applied transformer: %s", feat)
 
         # 4) Save engineered data
         out_path = PROJECT_ROOT / cfg.data_source.processed_path

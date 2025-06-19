@@ -19,12 +19,8 @@ import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 from dotenv import load_dotenv
 
-# ensure we can import our package
-PROJECT_ROOT = Path(__file__).resolve().parents[2]    # .../MLOps
-SRC_ROOT = PROJECT_ROOT / "src"
-if str(SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(SRC_ROOT))
-
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(PROJECT_ROOT))
 from src.model.model import run_model_pipeline  # noqa: E402
 
 log = logging.getLogger(__name__)

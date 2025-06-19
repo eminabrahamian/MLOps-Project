@@ -6,11 +6,6 @@ preprocessing pipeline, writes processed splits, and logs
 them as W&B artifacts.
 """
 
-from preprocessing.preprocessing import (
-    build_preprocessing_pipeline,
-    get_output_feature_names,
-)
-import wandb
 import logging
 import sys
 import tempfile
@@ -23,9 +18,14 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from sklearn.model_selection import train_test_split
 
-# Ensure the src directory is in the Python path
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # …/MLOps
-sys.path.insert(0, str(PROJECT_ROOT))
+import wandb
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(PROJECT_ROOT))
+from src.preprocessing.preprocessing import (
+    build_preprocessing_pipeline,
+    get_output_feature_names,
+)
 
 
 @hydra.main(

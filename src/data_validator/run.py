@@ -17,15 +17,10 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 
 import wandb
-from src.data_validator.data_validator import setup_logger, validate_data
 
-# Resolve project root (two levels up from this file)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-# Make sure our src/ folder is on PYTHONPATH so we can import data_validator
-SRC_ROOT = PROJECT_ROOT / "src"
-if str(SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(SRC_ROOT))
+sys.path.append(str(PROJECT_ROOT))
+from src.data_validator.data_validator import setup_logger, validate_data
 
 
 def html_schema_report(report: dict) -> str:

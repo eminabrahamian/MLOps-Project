@@ -20,6 +20,10 @@ data_load:
   log_summary_stats: true
   log_sample_artifacts: true
 
+features:
+  enabled: false
+  log_artifacts: true
+
 logging:
   level: INFO
   log_file: ./logs/main.log
