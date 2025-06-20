@@ -1,0 +1,8 @@
+{
+  "Confusion Matrix": {
+    "tn": 34,
+    "fp": 8,
+    "fn": 6,
+    "tp": 66
+  }
+}

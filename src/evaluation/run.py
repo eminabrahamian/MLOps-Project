@@ -73,7 +73,7 @@ def main(cfg: DictConfig) -> None:
             if "splits" in cfg.evaluation
             else ["validation"]
         )
-        metrics_dir = Path(cfg.artifacts.metrics_dir)
+        metrics_dir = Path(PROJECT_ROOT) / Path(cfg.artifacts.metrics_dir)
         metrics_dir.mkdir(parents=True, exist_ok=True)
 
         for split in splits:
@@ -83,7 +83,7 @@ def main(cfg: DictConfig) -> None:
                 split=split,
                 processed_dir=cfg.artifacts.processed_dir,
                 model_path=cfg.artifacts.model_path,
-                save_path=str(metrics_dir / f"{split}_metrics.json"),
+                save_path=str(metrics_dir),
             )
 
             # 6a) Log the JSON file as a W&B artifact

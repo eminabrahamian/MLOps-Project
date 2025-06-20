@@ -26,6 +26,7 @@ from sklearn.metrics import (
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 def _specificity(tn: int, fp: int) -> float:
     """
@@ -254,7 +255,7 @@ def generate_split_report(
     save_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Load processed split CSV and trained model, compute metrics for that split.
+    Load processed split XLSX and trained model, compute metrics for that split.
 
     Parameters
     ----------
@@ -265,10 +266,10 @@ def generate_split_report(
                         "metrics_dir": "..." }
           - "metrics": metric list under ["report"]
     split : str, default="validation"
-        Name of the split, expects file "<split>_processed.csv" in
+        Name of the split, expects file "<split>_processed.xlsx" in
         processed_dir.
     processed_dir : Optional[str], default=None
-        Directory containing processed CSVs. If None,
+        Directory containing processed XLSXs. If None,
         use config["artifacts"]["processed_dir"].
     model_path : Optional[str], default=None
         Path to pickled model file. If None,
@@ -283,22 +284,22 @@ def generate_split_report(
         Metrics dictionary for this split. Empty dict if any error occurs.
     """
     cfg_art = config.get("artifacts", {})
-    processed_dir = processed_dir or cfg_art.get(
+    processed_dir = Path(PROJECT_ROOT) / processed_dir or cfg_art.get(
         "processed_dir", "data/processed"
     )
-    model_path = model_path or cfg_art.get("model_path", "models/model.pkl")
-    metrics_dir = save_path or cfg_art.get("metrics_dir", "models/metrics")
+    model_path = Path(PROJECT_ROOT) / model_path or cfg_art.get("model_path", "models/model.pkl")
+    metrics_dir = Path(PROJECT_ROOT) / save_path or cfg_art.get("metrics_dir", "models/")
     target_col = config.get("target")
 
     report: Dict[str, Any] = {}
 
     # 1) Load split DataFrame
-    split_file = Path(processed_dir) / f"{split}_processed.csv"
+    split_file = Path(processed_dir) / f"{split}_processed.xlsx"
     if not split_file.is_file():
         logger.warning("Processed file not found: %s", split_file)
         return report
 
-    df_split = pd.read_csv(split_file)
+    df_split = pd.read_excel(split_file)
     if target_col not in df_split.columns:
         logger.error(
             "Target column '%s' missing in %s", target_col, split_file

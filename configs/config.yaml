@@ -59,6 +59,12 @@ preprocessing:
      worst symmetry: "worst_symmetry"
      worst fractal dimension: "worst_fractal_dimension"
 
+evaluation:
+  splits:
+    - train
+    - valid
+    - test
+
 logging:
   level: INFO
   log_file: ./logs/main.log
@@ -115,6 +121,7 @@ artifacts:
   processed_dir: "data/processed"
   preprocessing_pipeline: "models/preprocessing_pipeline.pkl"
   model_path: "models/active_model.pkl"
+  metrics_dir: "models/"
 
 data_validation:
   enabled: true
