@@ -65,6 +65,10 @@ evaluation:
     - valid
     - test
 
+inference:
+  input_file: "./data/raw/new_inference_data.xlsx"
+  output_file: "./data/inference_predictions/new_predictions.xlsx"
+
 logging:
   level: INFO
   log_file: ./logs/main.log
@@ -84,6 +88,38 @@ model:
     random_state: 42
 
 target: target
+
+original_features:
+  - mean radius
+  - mean texture
+  - mean perimeter
+  - mean area
+  - mean smoothness
+  - mean compactness
+  - mean concavity
+  - mean concave points
+  - mean symmetry
+  - mean fractal dimension
+  - radius error
+  - texture error
+  - perimeter error
+  - area error
+  - smoothness error
+  - compactness error
+  - concavity error
+  - concave points error
+  - symmetry error
+  - fractal dimension error
+  - worst radius
+  - worst texture
+  - worst perimeter
+  - worst area
+  - worst smoothness
+  - worst compactness
+  - worst concavity
+  - worst concave points
+  - worst symmetry
+  - worst fractal dimension
 
 raw_features:
   - mean_radius

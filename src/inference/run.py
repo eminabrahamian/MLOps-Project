@@ -34,7 +34,7 @@ def _df_hash(df: pd.DataFrame) -> str:
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 @hydra.main(
-    config_path=str(PROJECT_ROOT),
+    config_path=str(PROJECT_ROOT / "configs"),
     config_name="config",
     version_base=None,
 )
@@ -72,17 +72,17 @@ def main(cfg: DictConfig) -> None:
 
         # try to pull preprocessed data artifact for lineage
         try:
-            art = run.use_artifact(f"{cfg.inference.input_artifact}:latest")
+            art = run.use_artifact("inference_data:latest")
             with tempfile.TemporaryDirectory() as tmp:
                 art_dir = Path(art.download(root=tmp))
                 files = list(art_dir.glob("*.csv")) + list(art_dir.glob("*.xlsx"))
                 if files:
                     input_path = files[0]
-                    logger.info("Using artifact %s → %s", cfg.inference.input_artifact, input_path)
+                    logger.info("Using artifact %s → %s", "inference_data:latest", input_path)
         except Exception:
             logger.warning(
                 "Could not fetch artifact '%s'; using %s",
-                cfg.inference.input_artifact,
+                "inference_data:latest",
                 input_path,
             )
 

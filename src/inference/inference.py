@@ -23,6 +23,7 @@ from sklearn.base import BaseEstimator
 # Configure a module-level logger (will be initialized in main)
 logger = logging.getLogger(__name__)
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 class InferenceError(Exception):
     """Raised when any step of the inference pipeline fails."""
@@ -187,8 +188,7 @@ def preprocess_inference_data(
         if missing:
             raise InferenceError(f"Missing required features: {missing}")
 
-        X = data[required_features]
-        transformed = pipeline.transform(X)
+        transformed = pipeline.transform(data)
         logger.info(
             "Applied preprocessing pipeline; output shape: %s",
             transformed.shape,
@@ -293,8 +293,8 @@ def run_inference(
 
         # 2) Load artifacts
         artifacts = cfg.get("artifacts", {})
-        pipeline_path = artifacts.get("preprocessing_pipeline")
-        model_path = artifacts.get("model_path") or cfg.get("model", {}).get(
+        pipeline_path = Path(PROJECT_ROOT) / artifacts.get("preprocessing_pipeline")
+        model_path = Path(PROJECT_ROOT) / artifacts.get("model_path") or cfg.get("model", {}).get(
             "save_path"
         )
         if not pipeline_path:
@@ -312,7 +312,7 @@ def run_inference(
 
         # 3) Read raw data
         raw_df = get_data(input_path)
-        required_feats = cfg.get("raw_features", {})
+        required_feats = cfg.get("original_features", {})
 
         # 3a) Apply preprocessing pipeline (returns NumPy array)
         X_array = preprocess_inference_data(raw_df, pipeline, required_feats)
