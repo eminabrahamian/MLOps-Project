@@ -11,6 +11,7 @@ dependencies:
   - hydra-core         # @hydra.main + config support
   - omegaconf          # DictConfig / OmegaConf
   - python-dotenv      # load_dotenv
+  - openpyxl           # Excel I/O
   - pip
   - pip:
     - wandb            # W&B client (only on PyPI)

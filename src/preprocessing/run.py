@@ -87,7 +87,7 @@ def main(cfg: DictConfig) -> None:
 
         # 5) Build & apply preprocessing pipeline
         cfg_dict = OmegaConf.to_container(cfg, resolve=True)
-        pipeline = build_preprocessing_pipeline(cfg_dict["preprocessing"])
+        pipeline = build_preprocessing_pipeline(cfg_dict)
         X = pipeline.fit_transform(df)
         cols = get_output_feature_names(
             pipeline, df.columns.tolist(), cfg_dict

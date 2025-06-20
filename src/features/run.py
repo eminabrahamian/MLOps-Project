@@ -2,7 +2,7 @@
 MLflow‐compatible feature‐engineering step with Hydra config and W&B logging.
 
 Loads the validated dataset artifact, applies each configured transformer
-from FEATURE_TRANSFORMERS, saves the engineered CSV, and logs artifacts and summary
+from FEATURE_TRANSFORMERS, saves the engineered XLSX, and logs artifacts and summary
 metrics back to W&B.
 """
 import sys
@@ -97,7 +97,7 @@ def main(cfg: DictConfig) -> None:
         # 4) Save engineered data
         out_path = PROJECT_ROOT / cfg.data_source.processed_path
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(out_path, index=False)
+        df.to_excel(out_path, index=False)
         logger.info("Saved engineered data to %s", out_path)
 
         # 4a) Log it as a W&B artifact
