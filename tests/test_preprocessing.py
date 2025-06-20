@@ -152,9 +152,8 @@ def test_run_preprocessing_pipeline_integration(minimal_config, tmp_path):
     assert df_processed.shape[0] == 3
     # Check that there are no missing values after imputation
     assert not df_processed.isnull().any().any()
-    """
-    Test a pipeline that includes BMITransformer and DateTimeFeatures.
-    """
+    
+    # Test a pipeline that includes BMITransformer and DateTimeFeatures.
     data = pd.DataFrame(
         {
             "num": [1.0, 2.0],
@@ -193,6 +192,10 @@ def test_run_preprocessing_pipeline_integration(minimal_config, tmp_path):
         },
         "raw_features": ["num", "weight", "height", "cat", "date"],
     }
+    
+    # Ensure the data has all required columns
+    assert all(col in data.columns for col in cfg["raw_features"]), f"Missing columns in data: {set(cfg['raw_features']) - set(data.columns)}"
+    
     pipe = build_preprocessing_pipeline(cfg)
     arr = pipe.fit_transform(data)
     # Expect shape:
