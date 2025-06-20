@@ -13,15 +13,16 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 
-import hydra
-import wandb
 import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 from dotenv import load_dotenv
 
+import hydra
+import wandb
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(PROJECT_ROOT))
-from src.model.model import run_model_pipeline  # noqa: E402
+from src.model.model import run_model_pipeline
 
 log = logging.getLogger(__name__)
 
@@ -49,12 +50,10 @@ def main(cfg: DictConfig) -> None:
     log.info("Configuration\n%s", OmegaConf.to_yaml(cfg))
 
     # 3) Initialize W&B
-    os.environ["WANDB_PROJECT"] = cfg.wandb.project
-    os.environ["WANDB_ENTITY"] = cfg.wandb.entity
     run_name = f"model_{datetime.now():%Y%m%d_%H%M%S}"
     wandb_run = wandb.init(
-        project=cfg.wandb.project,
-        entity=cfg.wandb.entity,
+        project=cfg.main.wandb.project,
+        entity=cfg.main.wandb.entity,
         job_type="model",
         name=run_name,
         config=OmegaConf.to_container(cfg, resolve=True),
@@ -62,36 +61,40 @@ def main(cfg: DictConfig) -> None:
     log.info("Started W&B run: %s", wandb_run.name)
 
     try:
-        # 4) Fetch preprocessed data artifact from W&B
-        artifact = wandb_run.use_artifact(cfg.data.artifact, type=cfg.data.type)
+        # 4) Fetch processed data artifact from W&B
+        data_art = wandb_run.use_artifact("validated_data:latest")
         with tempfile.TemporaryDirectory() as tmpdir:
-            data_dir = artifact.download(root=tmpdir)
-            # locate a single CSV or Excel
-            files = list(Path(data_dir).glob("*.csv")) or list(Path(data_dir).glob("*.xlsx"))
-            if not files:
-                raise FileNotFoundError(f"No CSV/XLSX found in artifact {cfg.data.artifact}")
-            raw_path = files[0]
-        log.info("Downloaded preprocessed data to %s", raw_path)
+            data_dir = data_art.download(root=tmpdir)
 
-        # 5) Load into DataFrame
-        if raw_path.suffix == ".csv":
-            df = pd.read_csv(raw_path)
-        else:
-            df = pd.read_excel(raw_path, engine="openpyxl")
-        log.info("Loaded data shape: %s", df.shape)
+            data_file = os.path.join(data_dir, "processed_data.xlsx")
+            if os.path.isfile(data_file):
+                df = pd.read_excel(data_file)
+            else:
+                split_art = wandb_run.use_artifact("processed_data:latest")
+                split_dir = split_art.download(root=tmpdir)
+                train_df = pd.read_excel(os.path.join(split_dir, "train_processed.xlsx"))
+                valid_df = pd.read_excel(os.path.join(split_dir, "valid_processed.xlsx"))
+                test_df = pd.read_excel(os.path.join(split_dir, "test_processed.xlsx"))
+                df = pd.concat([train_df, valid_df, test_df], ignore_index=True)
+        
+        if df.empty:
+            log.warning("No data found in processed artifact.")
 
-        # 6) Run the full model pipeline
+        # 5) Run the full model pipeline
         #    This will split, fit pipeline & model, evaluate, and save artifacts
         run_model_pipeline(df, OmegaConf.to_container(cfg, resolve=True))
 
-        # 7) Log artifacts directory if desired
+        # 6) Log artifacts directory if desired
         art_cfg = cfg.get("artifacts", {})
         for name, path in {
             "preprocessor": art_cfg.get("preprocessing_pipeline"),
             "model": art_cfg.get("model_path"),
         }.items():
             if path:
-                wandb_run.log_artifact(wandb.Artifact(name, type=name), aliases=[run_name]).add_file(path)
+                artifact = wandb.Artifact(name, type=name)
+                artifact.add_file(path)
+                wandb_run.log_artifact(artifact, aliases=[run_name])
+
 
     except Exception as e:
         log.exception("Unexpected error during modeling step")
