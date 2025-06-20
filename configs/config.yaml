@@ -24,6 +24,41 @@ features:
   enabled: false
   log_artifacts: true
 
+preprocessing:
+  log_artifacts: true
+  log_pipeline: true
+  rename_columns:
+     mean radius: "mean_radius"
+     mean texture: "mean_texture"
+     mean perimeter: "mean_perimeter"
+     mean area: "mean_area"
+     mean smoothness: "mean_smoothness"
+     mean compactness: "mean_compactness"
+     mean concavity: "mean_concavity"
+     mean concave points: "mean_concave_points"
+     mean symmetry: "mean_symmetry"
+     mean fractal dimension: "mean_fractal_dimension"
+     radius error: "radius_error"
+     texture error: "texture_error"
+     perimeter error: "perimeter_error"
+     area error: "area_error"
+     smoothness error: "smoothness_error"
+     compactness error: "compactness_error"
+     concavity error: "concavity_error"
+     concave points error: "concave_points_error"
+     symmetry error: "symmetry_error"
+     fractal dimension error: "fractal_dimension_error"
+     worst radius: "worst_radius"
+     worst texture: "worst_texture"
+     worst perimeter: "worst_perimeter"
+     worst area: "worst_area"
+     worst smoothness: "worst_smoothness"
+     worst compactness: "worst_compactness"
+     worst concavity: "worst_concavity"
+     worst concave points: "worst_concave_points"
+     worst symmetry: "worst_symmetry"
+     worst fractal dimension: "worst_fractal_dimension"
+
 logging:
   level: INFO
   log_file: ./logs/main.log
@@ -77,6 +112,7 @@ raw_features:
   - worst fractal dimension
 
 artifacts:
+  processed_dir: "data/processed"
   preprocessing_pipeline: "models/preprocessing_pipeline.pkl"
   model_path: "models/active_model.pkl"
 

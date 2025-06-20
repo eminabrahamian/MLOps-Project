@@ -11,6 +11,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
+import pickle
 
 import hydra
 import pandas as pd
@@ -100,8 +101,8 @@ def main(cfg: DictConfig) -> None:
         proc_dir.mkdir(parents=True, exist_ok=True)
 
         # full dataset
-        full_path = proc_dir / "preprocessed_data.csv"
-        df_proc.to_csv(full_path, index=False)
+        full_path = proc_dir / "cancer_processed.xlsx"
+        df_proc.to_excel(full_path, index=False)
 
         # train/valid/test
         split_cfg = cfg.data_split
@@ -122,17 +123,33 @@ def main(cfg: DictConfig) -> None:
             stratify=temp[cfg.target],
         )
 
-        train_df.to_csv(proc_dir / "train_processed.csv", index=False)
-        valid_df.to_csv(proc_dir / "valid_processed.csv", index=False)
-        test_df.to_csv(proc_dir / "test_processed.csv", index=False)
+        train_df.to_excel(proc_dir / "train_processed.xlsx", index=False)
+        valid_df.to_excel(proc_dir / "valid_processed.xlsx", index=False)
+        test_df.to_excel(proc_dir / "test_processed.xlsx", index=False)
 
         # 7) Log processed artifacts
         if cfg.preprocessing.log_artifacts:
-            art = wandb.Artifact("preprocessed_data", type="dataset")
-            for f in proc_dir.glob("*.csv"):
+            art = wandb.Artifact("processed_data", type="dataset")
+            for f in proc_dir.glob("*.xlsx"):
                 art.add_file(str(f), name=f.name)
             run.log_artifact(art, aliases=["latest"])
             logger.info("Logged preprocessed data artifact")
+
+        # 8) Log preprocessing pipeline
+        pp_path = PROJECT_ROOT / cfg.artifacts.get("preprocessing_pipeline", "models/preprocessing_pipeline.pkl")
+        pp_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with pp_path.open("wb") as f:
+            pickle.dump(pipeline, f)
+        logger.info("Saved preprocessing pipeline to %s", pp_path)
+        
+        if cfg.preprocessing.log_pipeline:
+            artifact = wandb.Artifact(
+                "preprocessing_pipeline", type="pipeline"
+            )
+            artifact.add_file(str(pp_path))
+            run.log_artifact(artifact, aliases=["latest"])
+            logger.info("Logged preprocessing pipeline artifact to WandB")
 
     except Exception as exc:
         logger.exception("Preprocessing failed")

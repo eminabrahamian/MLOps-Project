@@ -86,12 +86,13 @@ def build_preprocessing_pipeline(config: Dict) -> Pipeline:
     steps: list[tuple] = []
 
     # 1) RiskScore transformer
-    steps.append(
-        ("risk_score", RiskScore(pp_cfg.get("icd10_chapter_flags", [])))
-    )
+    if pp_cfg.get("risk_score", False):
+        steps.append(
+            ("risk_score", RiskScore(pp_cfg.get("icd10_chapter_flags", [])))
+        )
 
     # 2) Optional feature transformers
-    if pp_cfg.get("weight_col") and pp_cfg.get("height_col"):
+    if pp_cfg.get("weight_col", False) and pp_cfg.get("height_col", False):
         steps.append(
             (
                 "bmi",
@@ -266,12 +267,13 @@ if __name__ == "__main__":
     """
     Run the preprocessing pipeline from the command line.
 
-        python -m src.preprocessing.preprocessing <raw_data.xlsx> <config.yaml>
+    python -m src.preprocessing.preprocessing <raw_data.xlsx> <config.yaml>
 
     WHY:
-        Allows ad-hoc preprocessing runs without writing additional scripts.
-        Saves transformed data to data/processed/ for reproducibility
-        and future use.
+    
+    Allows ad-hoc preprocessing runs without writing additional scripts.
+    Saves transformed data to data/processed/ for reproducibility
+    and future use.
     """
     import yaml
 

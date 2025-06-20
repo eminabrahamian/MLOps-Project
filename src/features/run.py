@@ -42,7 +42,7 @@ def main(cfg: DictConfig) -> None:
     Steps:
       1. Init W&B run
       2. Fetch validated data artifact
-      3. Loop through cfg.features.engineered, apply each transformer
+      3. Loop through cfg.features.engineered, apply each transformer if enabled
       4. Save engineered dataset and log it as a W&B artifact
       5. Log summary metrics (n_rows, n_cols, applied_features, feature_params)
     """
