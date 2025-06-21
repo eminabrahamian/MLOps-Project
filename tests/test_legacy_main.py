@@ -20,7 +20,7 @@ import pytest
 import yaml
 
 # Import the module under test
-from legacy_main import _load_config, _setup_logging, main
+from src.legacy_main import _load_config, _setup_logging, main
 
 
 # Helper to capture sys.exit calls
