@@ -26,5 +26,9 @@ jobs:
       - name: Verify environment
         run: conda info && conda list
       - name: Run tests with coverage
-        run: PYTHONPATH=$PWD pytest --cov=src
+        shell: bash -l {0}
+        run: |
+          conda activate test
+          PYTHONPATH=$PWD pytest --cov=src
+
 
