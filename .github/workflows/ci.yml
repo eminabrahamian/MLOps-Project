@@ -22,7 +22,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-activate-base: false
-          environment-file: environment.yml
+          environment-file: configs/environment.yml
       - name: Verify environment
         run: conda info && conda list
       - name: Set PYTHONPATH
