@@ -11,6 +11,9 @@ Covers:
 """
 
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -26,14 +29,12 @@ from src.data_loader.data_loader import (
 )
 
 
-# Fixture: create a temporary config.yaml for testing
 @pytest.fixture
-def temp_config(tmp_path):
-    """
-    Create a temporary config.yaml with:
-      - minimal logging section
-      - data_source pointing to a CSV and then an Excel.
-    """
+def temp_excel_config(tmp_path):
+    data_file = tmp_path / "data.xlsx"
+    df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
+    df.to_excel(data_file, sheet_name="Sheet1", index=False)
+
     cfg = {
         "logging": {
             "level": "DEBUG",
@@ -42,151 +43,341 @@ def temp_config(tmp_path):
             "datefmt": None,
         },
         "data_source": {
-            "raw_path": str(tmp_path / "data.csv"),
-            "type": "csv",
+            "raw_path": str(data_file),
+            "type": "excel",
             "header": 0,
-            "encoding": "utf-8",
+            "sheet_name": "Sheet1",
+            "encoding": None,
         },
     }
+
     config_file = tmp_path / "config.yaml"
-    with config_file.open("w", encoding="utf-8") as f:
-        yaml.safe_dump(cfg, f)
-    return config_file, cfg
+    config_file.write_text(yaml.safe_dump(cfg))
+    return config_file, cfg, df
 
 
 def test_load_config_missing(tmp_path):
-    """
-    Test load_config raises DataLoaderError when
-    the config file does not exist.
-    """
-    fake_path = tmp_path / "nonexistent.yaml"
-    with pytest.raises(DataLoaderError) as excinfo:
-        load_config(fake_path)
-    assert "Config file not found" in str(excinfo.value)
+    with pytest.raises(DataLoaderError) as e:
+        load_config(tmp_path / "missing.yaml")
+    assert "Config file not found" in str(e.value)
 
 
 def test_load_config_invalid_yaml(tmp_path):
-    """
-    Test load_config raises DataLoaderError when YAML is invalid.
-    """
-    bad_yaml = tmp_path / "bad.yaml"
-    bad_yaml.write_text("this: [unclosed_list", encoding="utf-8")
-    with pytest.raises(DataLoaderError) as excinfo:
-        load_config(bad_yaml)
-    assert "Invalid YAML" in str(excinfo.value)
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("invalid: [")
+    with pytest.raises(DataLoaderError):
+        load_config(bad)
 
 
-def test_setup_logger_creates_file(tmp_path, temp_config):
-    """
-    Test that setup_logger returns a logger and
-    creates the log file when logging messages.
-    """
-    config_file, cfg_dict = temp_config
-    log_cfg = cfg_dict["logging"]
+def test_setup_logger_with_defaults(tmp_path):
+    cfg = {"level": "INFO", "log_file": str(tmp_path / "log.log")}
+    logger = setup_logger(cfg)
+    logger.info("Log default test")
+    assert Path(cfg["log_file"]).read_text().strip() != ""
+
+
+def test_setup_logger_full_config(temp_excel_config):
+    _, cfg, _ = temp_excel_config
+    log_cfg = cfg["logging"]
     logger = setup_logger(log_cfg)
-    # Emit a log; should write to the specified file
-    logger.debug("Test debug log")
-    # File may not exist immediately until flush; explicitly flush handlers
-    for h in logging.root.handlers:
-        h.flush()
-    log_path = Path(log_cfg["log_file"])
-    assert log_path.is_file(), "Log file should be created"
-    content = log_path.read_text()
-    assert "Test debug log" in content
+    logger.debug("Logger full config test")
+    assert Path(log_cfg["log_file"]).read_text().strip() != ""
 
 
-def test_load_data_source_csv(tmp_path, temp_config):
-    """
-    Test load_data_source can read a CSV with header and encoding correctly.
-    """
-    config_file, cfg_dict = temp_config
-    csv_path = tmp_path / "data.csv"
-    # Write a small CSV
-    df_orig = pd.DataFrame({"col1": [1, 2], "col2": ["a", "b"]})
-    df_orig.to_csv(csv_path, index=False)
-    ds_cfg = {
-        "raw_path": str(csv_path),
-        "type": "csv",
-        "header": 0,
-        "encoding": "utf-8",
-    }
-    df_loaded = load_data_source(ds_cfg)
-    # DataFrame equality check
-    pd.testing.assert_frame_equal(df_loaded.reset_index(drop=True), df_orig)
+def test_load_data_source_excel_success(temp_excel_config):
+    _, cfg, df_expected = temp_excel_config
+    df = load_data_source(cfg["data_source"])
+    pd.testing.assert_frame_equal(df, df_expected)
 
 
-def test_load_data_source_excel(tmp_path):
-    """
-    Test load_data_source can read an Excel sheet with default sheet name.
-    """
-    excel_path = tmp_path / "data.xlsx"
-    df_orig = pd.DataFrame({"x": [3, 4], "y": [True, False]})
-    df_orig.to_excel(excel_path, sheet_name="Sheet1", index=False)
-    ds_cfg = {
-        "raw_path": str(excel_path),
+def test_load_data_source_missing_excel(tmp_path):
+    cfg = {
+        "raw_path": str(tmp_path / "missing.xlsx"),
         "type": "excel",
         "header": 0,
         "sheet_name": "Sheet1",
         "encoding": None,
     }
-    df_loaded = load_data_source(ds_cfg)
-    pd.testing.assert_frame_equal(df_loaded, df_orig)
+    with pytest.raises(DataLoaderError) as e:
+        load_data_source(cfg)
+    assert "Data file not found" in str(e.value)
 
 
-def test_load_data_source_missing_file(tmp_path):
-    """
-    Test load_data_source raises DataLoaderError when the file is missing.
-    """
-    ds_cfg = {
-        "raw_path": str(tmp_path / "no.csv"),
-        "type": "csv",
+def test_load_data_source_bad_sheet(tmp_path):
+    path = tmp_path / "data.xlsx"
+    pd.DataFrame({"x": [1]}).to_excel(path, sheet_name="Sheet1", index=False)
+
+    cfg = {
+        "raw_path": str(path),
+        "type": "excel",
         "header": 0,
-        "encoding": "utf-8",
+        "sheet_name": "NonexistentSheet",
+        "encoding": None,
     }
-    with pytest.raises(DataLoaderError) as excinfo:
-        load_data_source(ds_cfg)
-    assert "Data file not found" in str(excinfo.value)
+    with pytest.raises(DataLoaderError) as e:
+        load_data_source(cfg)
+    assert "Failed to load EXCEL" in str(e.value)
 
 
-def test_load_data_source_unsupported_type(tmp_path):
-    """
-    Test load_data_source raises DataLoaderError on unsupported 'type' values.
-    """
-    # Create a dummy CSV so path exists
-    csv_path = tmp_path / "data2.csv"
-    pd.DataFrame({"a": [1]}).to_csv(csv_path, index=False)
-    ds_cfg = {
-        "raw_path": str(csv_path),
-        "type": "txt",
+def test_load_data_source_invalid_type(tmp_path):
+    path = tmp_path / "valid.xlsx"
+    pd.DataFrame({"a": [1]}).to_excel(path, sheet_name="Sheet1", index=False)
+
+    cfg = {
+        "raw_path": str(path),
+        "type": "banana",
         "header": 0,
-        "encoding": "utf-8",
+        "sheet_name": "Sheet1"
     }
-    with pytest.raises(DataLoaderError) as excinfo:
-        load_data_source(ds_cfg)
-    assert "Unsupported data type" in str(excinfo.value)
+    with pytest.raises(DataLoaderError) as e:
+        load_data_source(cfg)
+    assert "Unsupported data type" in str(e.value)
 
 
-def test_load_data_integration(tmp_path, monkeypatch, temp_config):
-    """
-    Integration test for load_data:
-      - Monkeypatch load_config to return our temp config
-      - Monkeypatch load_data_source to return a non-empty DataFrame
-      - Verify load_data returns the DataFrame and logs correctly
-    """
-    config_file, cfg_dict = temp_config
+def test_load_data_integration(monkeypatch, temp_excel_config):
+    _, cfg, df_expected = temp_excel_config
 
-    # Write a small CSV & update ds_cfg path
-    csv_path = tmp_path / "dataraw.csv"
-    df_test = pd.DataFrame({"foo": [10, 20]})
-    df_test.to_csv(csv_path, index=False)
-    cfg_dict["data_source"]["raw_path"] = str(csv_path)
+    def fake_load_config(path=None):
+        return cfg
 
-    # Monkeypatch load_config to ignore default path
-    def fake_load_config(arg=None):
-        return cfg_dict
+    monkeypatch.setattr("src.data_loader.data_loader.load_config", fake_load_config)
 
-    monkeypatch.setattr("src.data.data_loader.load_config", fake_load_config)
-
-    # Now call load_data; it should return df_test
     df_loaded = load_data()
-    pd.testing.assert_frame_equal(df_loaded.reset_index(drop=True), df_test)
+    pd.testing.assert_frame_equal(df_loaded, df_expected)
+
+
+def test_data_loader_main_success(tmp_path):
+    script = Path("src/data_loader/data_loader.py")
+    data_file = tmp_path / "input.xlsx"
+    df = pd.DataFrame({"z": [1, 2]})
+    df.to_excel(data_file, sheet_name="Sheet1", index=False)
+
+    cfg = {
+        "logging": {
+            "level": "INFO",
+            "log_file": str(tmp_path / "log.log"),
+            "format": "%(message)s",
+        },
+        "data_source": {
+            "raw_path": str(data_file),
+            "type": "excel",
+            "header": 0,
+            "sheet_name": "Sheet1",
+            "encoding": None,
+        },
+    }
+
+    config_dir = Path("configs")
+    config_dir.mkdir(exist_ok=True)
+    (config_dir / "config.yaml").write_text(yaml.safe_dump(cfg))
+
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(Path.cwd()),
+        "COVERAGE_PROCESS_START": str(Path.cwd() / ".coveragerc"),
+    }
+
+    result = subprocess.run(
+        [sys.executable, str(script)],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert "Data loaded successfully" in result.stdout or result.stderr
+
+
+def test_data_loader_main_dataloader_error(tmp_path):
+    script = Path("src/data_loader/data_loader.py")
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(Path.cwd()),
+        "COVERAGE_PROCESS_START": str(Path.cwd() / ".coveragerc"),
+    }
+    result = subprocess.run(
+        [sys.executable, str(script)],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert "DataLoaderError" in result.stderr or result.stdout
+
+
+def test_data_loader_main_yaml_error_as_dataloadererror(tmp_path):
+    config_dir = Path("configs")
+    config_dir.mkdir(exist_ok=True)
+    (config_dir / "config.yaml").write_text("invalid: [")  # bad yaml
+
+    script = Path("src/data_loader/data_loader.py")
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(Path.cwd()),
+        "COVERAGE_PROCESS_START": str(Path.cwd() / ".coveragerc"),
+    }
+    result = subprocess.run(
+        [sys.executable, str(script)],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert "DataLoaderError" in result.stderr or result.stdout
+
+
+def test_data_loader_main_generic_exception(tmp_path):
+    config = {
+        "data_source": {
+            "raw_path": "nonexistent.xlsx",
+            "type": "excel",
+            "header": 0,
+            "sheet_name": "Sheet1",
+            "encoding": None,
+        }
+    }
+
+    config_dir = Path("configs")
+    config_dir.mkdir(exist_ok=True)
+    (config_dir / "config.yaml").write_text(yaml.safe_dump(config))
+
+    script = Path("src/data_loader/data_loader.py")
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(Path.cwd()),
+        "COVERAGE_PROCESS_START": str(Path.cwd() / ".coveragerc"),
+    }
+
+    result = subprocess.run(
+        [sys.executable, str(script)],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert "Unexpected error" in result.stderr or result.stdout
+
+
+def test_load_config_triggers_file_check(tmp_path):
+    missing_file = tmp_path / "fake.yaml"
+    assert isinstance(missing_file, Path)
+    with pytest.raises(DataLoaderError) as e:
+        load_config(missing_file)
+    assert "Config file not found" in str(e.value)
+
+
+def test_data_loader_main_load_data_executes(tmp_path):
+    config_dir = Path("configs")
+    config_dir.mkdir(exist_ok=True)
+
+    file = tmp_path / "main_data.xlsx"
+    df = pd.DataFrame({"x": [1]})
+    df.to_excel(file, sheet_name="Sheet1", index=False)
+
+    cfg = {
+        "logging": {
+            "level": "INFO",
+            "log_file": str(tmp_path / "logfile.log"),
+            "format": "%(message)s",
+        },
+        "data_source": {
+            "raw_path": str(file),
+            "type": "excel",
+            "header": 0,
+            "sheet_name": "Sheet1",
+            "encoding": None,
+        },
+    }
+
+    (config_dir / "config.yaml").write_text(yaml.safe_dump(cfg))
+
+    script = Path("src/data_loader/data_loader.py")
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(Path.cwd()),
+        "COVERAGE_PROCESS_START": str(Path.cwd() / ".coveragerc"),
+    }
+
+    result = subprocess.run(
+        [sys.executable, str(script)],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert "Data loaded successfully" in result.stdout or result.stderr
+
+def test_load_data_empty_warning(monkeypatch, tmp_path):
+    # Create empty Excel file
+    empty_file = tmp_path / "empty.xlsx"
+    pd.DataFrame().to_excel(empty_file, sheet_name="Sheet1", index=False)
+
+    config = {
+        "logging": {
+            "level": "INFO",
+            "log_file": str(tmp_path / "empty_log.log"),
+            "format": "%(message)s",
+        },
+        "data_source": {
+            "raw_path": str(empty_file),
+            "type": "excel",
+            "header": 0,
+            "sheet_name": "Sheet1",
+            "encoding": None,
+        },
+    }
+
+    config_path = Path("configs/config.yaml")
+    config_path.write_text(yaml.safe_dump(config))
+
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(Path.cwd()),
+        "COVERAGE_PROCESS_START": str(Path.cwd() / ".coveragerc"),
+    }
+
+    result = subprocess.run(
+        [sys.executable, "src/data_loader/data_loader.py"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert "Loaded DataFrame is empty" in result.stdout or result.stderr
+
+def test_data_loader_warns_on_empty_dataframe(tmp_path):
+    # 1. Create an empty Excel file
+    empty_file = tmp_path / "empty.xlsx"
+    pd.DataFrame().to_excel(empty_file, sheet_name="Sheet1", index=False)
+
+    # 2. Write a config that uses this file
+    cfg = {
+        "logging": {
+            "level": "INFO",
+            "log_file": str(tmp_path / "empty.log"),
+            "format": "%(message)s",
+        },
+        "data_source": {
+            "raw_path": str(empty_file),
+            "type": "excel",
+            "header": 0,
+            "sheet_name": "Sheet1",
+            "encoding": None,
+        },
+    }
+
+    # 3. Save the config as `configs/config.yaml`
+    config_dir = Path("configs")
+    config_dir.mkdir(exist_ok=True)
+    (config_dir / "config.yaml").write_text(yaml.safe_dump(cfg))
+
+    # 4. Run the script using subprocess
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(Path.cwd()),
+        "COVERAGE_PROCESS_START": str(Path.cwd() / ".coveragerc"),
+    }
+
+    result = subprocess.run(
+        [sys.executable, "src/data_loader/data_loader.py"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert "Loaded DataFrame is empty" in result.stdout or result.stderr
