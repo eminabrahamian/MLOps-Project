@@ -257,7 +257,7 @@ def generate_split_report(
 ) -> Dict[str, Any]:
     """
     Load processed split XLSX and trained model.
-    
+
     Compute metrics for that split.
 
     Parameters
@@ -287,28 +287,29 @@ def generate_split_report(
         Metrics dictionary for this split. Empty dict if any error occurs.
     """
     cfg_art = config.get("artifacts", {})
-    processed_dir = Path(PROJECT_ROOT) / processed_dir or cfg_art.get(
-        "processed_dir", "data/processed"
-    )
-    model_path = Path(PROJECT_ROOT) / model_path or\
-        cfg_art.get("model_path", "models/model.pkl")
-    metrics_dir = Path(PROJECT_ROOT) / save_path or\
-        cfg_art.get("metrics_dir", "models/")
-    target_col = config.get("target")
 
+    # Safe fallbacks with proper type conversion
+    processed_dir = PROJECT_ROOT / (
+        Path(processed_dir) if processed_dir is not None else Path(cfg_art.get("processed_dir", "data/processed"))
+    )
+    model_path = PROJECT_ROOT / (
+        Path(model_path) if model_path is not None else Path(cfg_art.get("model_path", "models/model.pkl"))
+    )
+    metrics_dir = PROJECT_ROOT / (
+        Path(save_path) if save_path is not None else Path(cfg_art.get("metrics_dir", "models"))
+    )
+    target_col = config.get("target")
     report: Dict[str, Any] = {}
 
     # 1) Load split DataFrame
-    split_file = Path(processed_dir) / f"{split}_processed.xlsx"
+    split_file = processed_dir / f"{split}_processed.xlsx"
     if not split_file.is_file():
         logger.warning("Processed file not found: %s", split_file)
         return report
 
     df_split = pd.read_excel(split_file)
     if target_col not in df_split.columns:
-        logger.error(
-            "Target column '%s' missing in %s", target_col, split_file
-        )
+        logger.error("Target column '%s' missing in %s", target_col, split_file)
         return report
 
     X = df_split.drop(columns=[target_col]).values
@@ -325,7 +326,7 @@ def generate_split_report(
 
     # 3) Evaluate metrics
     metrics_cfg = config.get("metrics", {}).get("report", None)
-    save_file = Path(metrics_dir) / f"{split}_metrics.json"
+    save_file = metrics_dir / f"{split}_metrics.json"
     metrics = evaluate_classification(
         model,
         X,
@@ -336,5 +337,4 @@ def generate_split_report(
         log_results=True,
         save_path=str(save_file),
     )
-    report = metrics
-    return report
+    return metrics

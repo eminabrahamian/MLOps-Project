@@ -17,6 +17,7 @@ import json
 import logging
 import pickle
 from pathlib import Path
+import io
 
 import numpy as np
 import pandas as pd
@@ -32,7 +33,7 @@ from src.evaluation.evaluation import (
 )
 
 
-# Dummy model that implements predict and predict_proba
+# Dummy model with predict and predict_proba
 class DummyBinaryClassifier(BaseEstimator):
     def __init__(self, proba=False):
         self.proba = proba
@@ -41,37 +42,27 @@ class DummyBinaryClassifier(BaseEstimator):
         return self
 
     def predict(self, X):
-        # Predict all zeros
         return np.zeros(shape=(X.shape[0],), dtype=int)
 
     def predict_proba(self, X):
-        # Return equal probability for both classes
         return np.tile([0.5, 0.5], (X.shape[0], 1))
 
 
-# config fixture
+class NoProbaClassifier(BaseEstimator):
+    def predict(self, X):
+        return np.ones(X.shape[0])
 
 
 @pytest.fixture
 def basic_config(tmp_path):
-    """
-    Returns a config dict with:
-      - metrics.report:
-        ['accuracy','precision','recall','f1','roc auc','specificity','npv']
-      - artifacts: processed_dir, model_path, metrics_dir
-      - target: 'target'
-    """
     proc_dir = tmp_path / "processed"
     proc_dir.mkdir()
-    # Create a simple processed CSV for "validation" split
     df_val = pd.DataFrame({"feat1": [0, 1, 1, 0], "target": [0, 1, 0, 1]})
-    df_val.to_csv(proc_dir / "validation_processed.csv", index=False)
+    df_val.to_excel(proc_dir / "validation_processed.xlsx", index=False)
 
-    # Create a simple processed CSV for "test" split
     df_test = pd.DataFrame({"feat1": [0, 1], "target": [1, 0]})
-    df_test.to_csv(proc_dir / "test_processed.csv", index=False)
+    df_test.to_excel(proc_dir / "test_processed.xlsx", index=False)
 
-    # Serialize a DummyBinaryClassifier to disk
     model = DummyBinaryClassifier(proba=True)
     model.fit(np.array([[0], [1], [1], [0]]), np.array([0, 1, 0, 1]))
     model_file = tmp_path / "model.pkl"
@@ -101,26 +92,16 @@ def basic_config(tmp_path):
 
 
 def test_specificity_npv_edge_cases():
-    """
-    Test that _specificity and _npv return NaN if denominator is zero,
-    and correct fraction otherwise.
-    """
-    # Specificity: tn/(tn+fp)
     assert np.isnan(_specificity(0, 0))
     assert _specificity(5, 0) == pytest.approx(1.0)
     assert _specificity(3, 1) == pytest.approx(3 / (3 + 1))
 
-    # NPV: tn/(tn+fn)
     assert np.isnan(_npv(0, 0))
     assert _npv(4, 0) == pytest.approx(1.0)
     assert _npv(2, 1) == pytest.approx(2 / (2 + 1))
 
 
 def test_round_dict_values_nested():
-    """
-    Test that _round_dict_values correctly rounds nested float
-    values and leaves others untouched.
-    """
     nested = {"a": 1.23456, "b": {"c": 2.34567, "d": "no_change"}, "e": 3}
     rounded = _round_dict_values(nested, digits=2)
     assert rounded["a"] == 1.23
@@ -130,21 +111,12 @@ def test_round_dict_values_nested():
 
 
 def test_evaluate_classification_basic(basic_config, tmp_path, caplog):
-    """
-    Test evaluate_classification with DummyBinaryClassifier:
-      - X and y that produce known metrics (all-zero predictions)
-      - Check that metrics dict contains keys and correct values
-      - Test save_path: JSON file is written
-      - Test log_results=True: INFO logs present
-    """
     cfg = basic_config
-    # Create input arrays: shape (4,1)
     X = np.array([[0], [1], [0], [1]])
-    y_true = np.array([0, 1, 1, 0])  # two correct, two incorrect
+    y_true = np.array([0, 1, 1, 0])
     model = DummyBinaryClassifier(proba=True)
     model.fit(X, y_true)
 
-    # Call evaluate_classification with save_path and log_results
     caplog.set_level(logging.INFO)
     save_file = tmp_path / "out_metrics.json"
     metrics = evaluate_classification(
@@ -152,12 +124,12 @@ def test_evaluate_classification_basic(basic_config, tmp_path, caplog):
         X,
         y_true,
         cfg,
-        metrics=None,  # should read from cfg
+        metrics=None,
         split_name="validation",
         log_results=True,
         save_path=str(save_file),
     )
-    # Validate keys
+
     for key in [
         "Accuracy",
         "Precision",
@@ -170,47 +142,191 @@ def test_evaluate_classification_basic(basic_config, tmp_path, caplog):
     ]:
         assert key in metrics
 
-    # Accuracy: model predicts all zeros; out of 4, two zeros correct →
-    # accuracy = 0.5
     assert metrics["Accuracy"] == pytest.approx(0.5)
-
-    # JSON file should exist and match metrics
     assert save_file.is_file()
     data = json.loads(save_file.read_text())
     assert "Accuracy" in data
-
-    # Check that INFO log contains "Metrics [validation]"
-    assert any(
-        "Metrics [validation]" in rec.getMessage() for rec in caplog.records
-    )
+    assert any("Metrics [validation]" in rec.getMessage() for rec in caplog.records)
 
 
 def test_generate_split_report_no_files(tmp_path, basic_config):
-    """
-    Test generate_split_report returns empty dict and logs warning
-    if processed file missing.
-    """
     cfg = basic_config
-    # Point processed_dir to an empty folder
     cfg["artifacts"]["processed_dir"] = str(tmp_path / "empty")
     cfg["artifacts"]["metrics_dir"] = str(tmp_path / "metrics_out")
-    # No CSV files exist
     report = generate_split_report(cfg, split="nonexistent")
     assert report == {}
 
 
 def test_generate_split_report_success(tmp_path, basic_config):
-    """
-    Test generate_split_report with valid files and model:
-      - Should load CSVs, load model, compute metrics, and write JSON.
-      - Returned dict should match metrics.
-    """
     cfg = basic_config
-    # Ensure metrics_dir exists
     metrics_dir = Path(cfg["artifacts"]["metrics_dir"])
     metrics_dir.mkdir(parents=True, exist_ok=True)
     report = generate_split_report(cfg, split="validation")
-    # Should return a non-empty dict with "Accuracy"
     assert "Accuracy" in report
-    # JSON file should have been written
     assert (metrics_dir / "validation_metrics.json").is_file()
+
+
+# ---------- NEW TESTS TO INCREASE COVERAGE ----------
+
+def test_roc_auc_missing_predict_proba(basic_config):
+    model = NoProbaClassifier()
+    X = np.array([[0], [1], [2]])
+    y = np.array([0, 1, 1])
+    cfg = basic_config
+    result = evaluate_classification(model, X, y, cfg, metrics=["roc auc"])
+    assert np.isnan(result["ROC AUC"])
+
+
+def test_confusion_matrix_one_class_only(basic_config):
+    model = DummyBinaryClassifier()
+    X = np.array([[0], [0], [0]])
+    y = np.array([0, 0, 0])  # only negatives
+    result = evaluate_classification(model, X, y, basic_config, metrics=["confusion matrix"])
+    cm = result["Confusion Matrix"]
+    assert cm["fp"] == 0 and cm["fn"] == 0 and cm["tp"] == 0
+
+
+def test_save_path_exception(monkeypatch, basic_config):
+    model = DummyBinaryClassifier()
+    X = np.array([[0], [1]])
+    y = np.array([0, 1])
+    bad_path = Path("/invalid/dir/metrics.json")
+
+    def bad_mkdir(*args, **kwargs):
+        raise OSError("fail mkdir")
+
+    monkeypatch.setattr("pathlib.Path.mkdir", bad_mkdir)
+
+    with pytest.raises(OSError):
+        evaluate_classification(model, X, y, basic_config, save_path=str(bad_path))
+
+
+def test_generate_split_report_missing_target(tmp_path, basic_config):
+    cfg = basic_config
+    file = Path(cfg["artifacts"]["processed_dir"]) / "validation_processed.xlsx"
+    pd.DataFrame({"feat1": [0, 1, 0]}).to_excel(file, index=False)  # no 'target'
+    result = generate_split_report(cfg, split="validation")
+    assert result == {}
+
+
+def test_generate_split_report_bad_model_file(tmp_path, basic_config):
+    cfg = basic_config
+    model_path = Path(cfg["artifacts"]["model_path"])
+    model_path.write_text("not a pickle")
+    result = generate_split_report(cfg, split="validation")
+    assert result == {}
+
+def test_confusion_matrix_single_class_skips_conf_matrix(basic_config):
+    model = DummyBinaryClassifier()
+    X = np.array([[0], [1], [2]])
+    y = np.array([1, 1, 1])  # only one class present
+    result = evaluate_classification(model, X, y, basic_config, metrics=["confusion matrix"])
+    assert result["Confusion Matrix"] == {"tn": 0, "fp": 0, "fn": 3, "tp": 0}
+
+def test_round_dict_values_complex_structure():
+    nested = {
+        "a": 1.23456789,
+        "b": {
+            "c": 3.141592,
+            "d": [1.98765, "no_round"],  # stays unchanged
+            "e": {
+                "f": 2.71828,
+                "g": {"h": 0.333333},
+            },
+        },
+        "x": "string",
+    }
+    rounded = _round_dict_values(nested, digits=3)
+    assert rounded["a"] == 1.235
+    assert rounded["b"]["c"] == 3.142
+    assert rounded["b"]["d"] == [1.98765, "no_round"]  # no change
+    assert rounded["b"]["e"]["f"] == 2.718
+    assert rounded["b"]["e"]["g"]["h"] == 0.333
+
+def test_evaluate_classification_save_path_failure(tmp_path, basic_config, monkeypatch):
+    model = DummyBinaryClassifier()
+    X = np.array([[0], [1]])
+    y = np.array([0, 1])
+
+    save_file = tmp_path / "metrics.json"
+
+    def fail_open(*args, **kwargs):
+        raise IOError("fail write")
+
+    monkeypatch.setattr("builtins.open", lambda *a, **kw: fail_open())
+
+    result = evaluate_classification(model, X, y, basic_config, save_path=str(save_file))
+    assert "Accuracy" in result  # still returns metrics
+
+def test_round_dict_values_deep_dict():
+    input_dict = {
+        "outer": {
+            "inner": {
+                "number": 1.23456,
+                "text": "skip",
+                "list": [1.11111, "text"]
+            },
+            "nested": {
+                "float": 9.87654,
+                "none": None
+            }
+        }
+    }
+    rounded = _round_dict_values(input_dict, digits=2)
+    assert rounded["outer"]["inner"]["number"] == 1.23
+    assert rounded["outer"]["inner"]["text"] == "skip"
+    assert rounded["outer"]["nested"]["float"] == 9.88
+    assert rounded["outer"]["nested"]["none"] is None
+
+def test_evaluate_classification_json_write_failure(monkeypatch, tmp_path, basic_config):
+    model = DummyBinaryClassifier()
+    X = np.array([[0], [1]])
+    y = np.array([0, 1])
+    target_file = tmp_path / "fail.json"
+
+    # Simulate failure when trying to open file for writing
+    def fail_open(*args, **kwargs):
+        raise IOError("Write failure")
+
+    monkeypatch.setattr("builtins.open", lambda *a, **kw: fail_open())
+
+    result = evaluate_classification(model, X, y, basic_config, save_path=str(target_file))
+    assert "Accuracy" in result  # still returns result despite write failure
+
+import io
+
+def test_json_dump_write_failure(monkeypatch, tmp_path, basic_config):
+    model = DummyBinaryClassifier()
+    X = np.array([[0], [1]])
+    y = np.array([0, 1])
+    save_path = tmp_path / "failing_metrics.json"
+
+    class FailingFile(io.StringIO):
+        def write(self, *args, **kwargs):
+            raise IOError("Write failed")
+
+    def failing_open(*args, **kwargs):
+        return FailingFile()
+
+    monkeypatch.setattr("builtins.open", failing_open)
+
+    result = evaluate_classification(model, X, y, basic_config, save_path=str(save_path))
+    assert "Accuracy" in result
+
+def test_rounding_and_logging_triggered(basic_config, caplog):
+    model = DummyBinaryClassifier()
+    X = np.array([[0], [1]])
+    y = np.array([0, 1])
+    caplog.set_level("INFO")
+
+    result = evaluate_classification(
+        model,
+        X,
+        y,
+        basic_config,
+        log_results=True,
+        split_name="validation"
+    )
+
+    assert "Metrics [validation]" in caplog.text
+    assert "Accuracy" in result
