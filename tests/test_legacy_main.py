@@ -120,8 +120,8 @@ def test_main_data_stage(monkeypatch, tmp_path):
 
     # Monkeypatch functions
     dummy_df = pd.DataFrame({"a": [1]})
-    monkeypatch.setattr("src.main.load_data", lambda: dummy_df)
-    monkeypatch.setattr("src.main.validate_data", lambda df, cfg: None)
+    monkeypatch.setattr("src.legacy_main.load_data", lambda: dummy_df)
+    monkeypatch.setattr("src.legacy_main.validate_data", lambda df, cfg: None)
 
     testargs = ["prog", "--config", str(cfg_file), "--stage", "data"]
     monkeypatch.setattr(sys, "argv", testargs)
@@ -147,9 +147,9 @@ def test_main_train_stage(monkeypatch, tmp_path):
         yaml.safe_dump(cfg, f)
 
     dummy_df = pd.DataFrame({"a": [1]})
-    monkeypatch.setattr("src.main.load_data", lambda: dummy_df)
-    monkeypatch.setattr("src.main.validate_data", lambda df, cfg: None)
-    monkeypatch.setattr("src.main.run_model_pipeline", lambda df, cfg: None)
+    monkeypatch.setattr("src.legacy_main.load_data", lambda: dummy_df)
+    monkeypatch.setattr("src.legacy_main.validate_data", lambda df, cfg: None)
+    monkeypatch.setattr("src.legacy_main.run_model_pipeline", lambda df, cfg: None)
 
     testargs = ["prog", "--config", str(cfg_file), "--stage", "train"]
     monkeypatch.setattr(sys, "argv", testargs)
@@ -181,8 +181,8 @@ def test_main_infer_stage(monkeypatch, tmp_path):
 
     # Monkeypatch read_excel to return df_inf
     monkeypatch.setattr(pd, "read_excel", lambda path: df_inf)
-    monkeypatch.setattr("src.main.validate_data", lambda df, cfg: None)
-    monkeypatch.setattr("src.main.run_inference", lambda **kwargs: None)
+    monkeypatch.setattr("src.legacy_main.validate_data", lambda df, cfg: None)
+    monkeypatch.setattr("src.legacy_main.run_inference", lambda **kwargs: None)
 
     testargs = [
         "prog",
