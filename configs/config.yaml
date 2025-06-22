@@ -1,10 +1,10 @@
 data_source:
   encoding: null
   header: 0
-  raw_path: /private/var/folders/jh/6hm_jsh52csbx0lg94qs0w_m0000gn/T/pytest-of-Emin/pytest-37/test_data_loader_warns_on_empt0/empty.xlsx
+  raw_path: /private/var/folders/jh/6hm_jsh52csbx0lg94qs0w_m0000gn/T/pytest-of-Emin/pytest-42/test_data_loader_warns_on_empt0/empty.xlsx
   sheet_name: Sheet1
   type: excel
 logging:
   format: '%(message)s'
   level: INFO
-  log_file: /private/var/folders/jh/6hm_jsh52csbx0lg94qs0w_m0000gn/T/pytest-of-Emin/pytest-37/test_data_loader_warns_on_empt0/empty.log
+  log_file: /private/var/folders/jh/6hm_jsh52csbx0lg94qs0w_m0000gn/T/pytest-of-Emin/pytest-42/test_data_loader_warns_on_empt0/empty.log
