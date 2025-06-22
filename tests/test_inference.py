@@ -99,7 +99,8 @@ def temp_inference_artifacts(tmp_path):
             "preprocessing_pipeline": str(pipe_file),
             "model_path": str(model_file),
         },
-        "raw_features": ["f1", "f2"],
+        "original_features": ["f1", "f2"],  # FIXED: added for correct shape
+        "raw_features": ["f1", "f2"]
     }
     cfg_file = tmp_path / "config_inf.yaml"
     with cfg_file.open("w", encoding="utf-8") as f:
@@ -290,15 +291,15 @@ def test_run_inference_happy_path(tmp_path, temp_inference_artifacts):
       - Call run_inference and check that an output Excel is created
     """
     cfg_file, cfg, pipeline, model = temp_inference_artifacts
-    # Create dummy input DataFrame with f1,f2
     df_in = pd.DataFrame({"f1": [1, 2], "f2": [3, 4]})
     in_csv = tmp_path / "in.csv"
     df_in.to_csv(in_csv, index=False)
 
     out_xlsx = tmp_path / "out_preds.xlsx"
-    # Should not raise
     run_inference(str(in_csv), str(cfg_file), str(out_xlsx), return_proba=True)
     assert out_xlsx.is_file()
+    df_out = pd.read_excel(out_xlsx)
+    assert "prediction" in df_out.columns
 
 
 def test_run_inference_missing_pipeline_key(
@@ -323,4 +324,26 @@ def test_run_inference_missing_pipeline_key(
             str(cfg_file),
             str(tmp_path / "o.xlsx"),
             return_proba=False,
+        )
+
+def test_run_inference_invalid_feature_names(tmp_path, temp_inference_artifacts):
+    """
+    Should trigger feature mismatch and sys.exit(1)
+    """
+    cfg_file, cfg, pipeline, model = temp_inference_artifacts
+    # Invalidate expected features
+    cfg["original_features"] = ["missing_col"]
+    with cfg_file.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(cfg, f)
+
+    df = pd.DataFrame({"f1": [1], "f2": [2]})
+    in_csv = tmp_path / "bad_input.csv"
+    df.to_csv(in_csv, index=False)
+
+    with pytest.raises(SystemExit):
+        run_inference(
+            str(in_csv),
+            str(cfg_file),
+            str(tmp_path / "fail_preds.xlsx"),
+            return_proba=False
         )
