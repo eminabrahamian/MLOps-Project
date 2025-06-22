@@ -256,8 +256,9 @@ def generate_split_report(
     save_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Load processed split XLSX and trained model,
-    compute metrics for that split.
+    Load processed split XLSX and trained model.
+    
+    Compute metrics for that split.
 
     Parameters
     ----------

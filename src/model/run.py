@@ -38,6 +38,12 @@ def _setup_logging(level: str = "INFO") -> None:
 @hydra.main(config_path="../../configs", config_name="config",
             version_base=None)
 def main(cfg: DictConfig) -> None:
+    """
+    Execute the modeling pipeline.
+
+    Loads the config, initializes Weights & Biases, fetches processed
+    data, runs model training, and logs artifacts and metrics.
+    """
     # 1) Load environment variables (if any)
     env_path = cfg.get("env_file", ".env")
     try:
