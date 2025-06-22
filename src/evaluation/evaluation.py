@@ -28,6 +28,7 @@ logger.setLevel(logging.INFO)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+
 def _specificity(tn: int, fp: int) -> float:
     """
     Compute specificity: TN / (TN + FP). Return NaN if denominator is zero.
@@ -255,7 +256,8 @@ def generate_split_report(
     save_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Load processed split XLSX and trained model, compute metrics for that split.
+    Load processed split XLSX and trained model,
+    compute metrics for that split.
 
     Parameters
     ----------
@@ -287,8 +289,10 @@ def generate_split_report(
     processed_dir = Path(PROJECT_ROOT) / processed_dir or cfg_art.get(
         "processed_dir", "data/processed"
     )
-    model_path = Path(PROJECT_ROOT) / model_path or cfg_art.get("model_path", "models/model.pkl")
-    metrics_dir = Path(PROJECT_ROOT) / save_path or cfg_art.get("metrics_dir", "models/")
+    model_path = Path(PROJECT_ROOT) / model_path or\
+        cfg_art.get("model_path", "models/model.pkl")
+    metrics_dir = Path(PROJECT_ROOT) / save_path or\
+        cfg_art.get("metrics_dir", "models/")
     target_col = config.get("target")
 
     report: Dict[str, Any] = {}

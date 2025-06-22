@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+
 class InferenceError(Exception):
     """Raised when any step of the inference pipeline fails."""
 
@@ -293,8 +294,10 @@ def run_inference(
 
         # 2) Load artifacts
         artifacts = cfg.get("artifacts", {})
-        pipeline_path = Path(PROJECT_ROOT) / artifacts.get("preprocessing_pipeline")
-        model_path = Path(PROJECT_ROOT) / artifacts.get("model_path") or cfg.get("model", {}).get(
+        pipeline_path = (Path(PROJECT_ROOT) /
+                         artifacts.get("preprocessing_pipeline"))
+        model_path = (Path(PROJECT_ROOT) /
+                      artifacts.get("model_path")) or cfg.get("model", {}).get(
             "save_path"
         )
         if not pipeline_path:

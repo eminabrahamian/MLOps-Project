@@ -10,7 +10,6 @@ Covers:
 - load_data (integration: reads YAML, loads data, empty vs. non-empty)
 """
 
-import logging
 import os
 import subprocess
 import sys
@@ -140,7 +139,9 @@ def test_load_data_integration(monkeypatch, temp_excel_config):
     def fake_load_config(path=None):
         return cfg
 
-    monkeypatch.setattr("src.data_loader.data_loader.load_config", fake_load_config)
+    monkeypatch.setattr(
+        "src.data_loader.data_loader.load_config", fake_load_config
+    )
 
     df_loaded = load_data()
     pd.testing.assert_frame_equal(df_loaded, df_expected)
@@ -302,6 +303,7 @@ def test_data_loader_main_load_data_executes(tmp_path):
     )
     assert "Data loaded successfully" in result.stdout or result.stderr
 
+
 def test_load_data_empty_warning(monkeypatch, tmp_path):
     # Create empty Excel file
     empty_file = tmp_path / "empty.xlsx"
@@ -339,6 +341,7 @@ def test_load_data_empty_warning(monkeypatch, tmp_path):
     )
 
     assert "Loaded DataFrame is empty" in result.stdout or result.stderr
+
 
 def test_data_loader_warns_on_empty_dataframe(tmp_path):
     # 1. Create an empty Excel file

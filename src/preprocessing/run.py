@@ -136,13 +136,15 @@ def main(cfg: DictConfig) -> None:
             logger.info("Logged preprocessed data artifact")
 
         # 8) Log preprocessing pipeline
-        pp_path = PROJECT_ROOT / cfg.artifacts.get("preprocessing_pipeline", "models/preprocessing_pipeline.pkl")
+        pp_path = PROJECT_ROOT / cfg.artifacts.get(
+            "preprocessing_pipeline", "models/preprocessing_pipeline.pkl"
+        )
         pp_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with pp_path.open("wb") as f:
             pickle.dump(pipeline, f)
         logger.info("Saved preprocessing pipeline to %s", pp_path)
-        
+
         if cfg.preprocessing.log_pipeline:
             artifact = wandb.Artifact(
                 "preprocessing_pipeline", type="pipeline"

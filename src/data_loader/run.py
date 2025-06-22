@@ -22,7 +22,8 @@ import wandb
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(PROJECT_ROOT))
-from src.data_loader.data_loader import DataLoaderError, load_data, setup_logger
+from src.data_loader.data_loader\
+    import DataLoaderError, load_data, setup_logger
 
 
 @hydra.main(

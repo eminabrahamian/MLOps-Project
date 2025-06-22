@@ -26,6 +26,7 @@ from src.model.model import run_model_pipeline
 
 log = logging.getLogger(__name__)
 
+
 def _setup_logging(level: str = "INFO") -> None:
     """Configure root logger."""
     logging.basicConfig(
@@ -34,7 +35,8 @@ def _setup_logging(level: str = "INFO") -> None:
     )
 
 
-@hydra.main(config_path="../../configs", config_name="config", version_base=None)
+@hydra.main(config_path="../../configs", config_name="config",
+            version_base=None)
 def main(cfg: DictConfig) -> None:
     # 1) Load environment variables (if any)
     env_path = cfg.get("env_file", ".env")
@@ -72,16 +74,21 @@ def main(cfg: DictConfig) -> None:
             else:
                 split_art = wandb_run.use_artifact("processed_data:latest")
                 split_dir = split_art.download(root=tmpdir)
-                train_df = pd.read_excel(os.path.join(split_dir, "train_processed.xlsx"))
-                valid_df = pd.read_excel(os.path.join(split_dir, "valid_processed.xlsx"))
-                test_df = pd.read_excel(os.path.join(split_dir, "test_processed.xlsx"))
-                df = pd.concat([train_df, valid_df, test_df], ignore_index=True)
-        
+                train_df = pd.read_excel(os.path.join(split_dir,
+                                                      "train_processed.xlsx"))
+                valid_df = pd.read_excel(os.path.join(split_dir,
+                                                      "valid_processed.xlsx"))
+                test_df = pd.read_excel(os.path.join(split_dir,
+                                                     "test_processed.xlsx"))
+                df = pd.concat([train_df, valid_df, test_df],
+                               ignore_index=True)
+
         if df.empty:
             log.warning("No data found in processed artifact.")
 
         # 5) Run the full model pipeline
-        #    This will split, fit pipeline & model, evaluate, and save artifacts
+        #    This will split, fit pipeline & model, evaluate,
+        #    and save artifacts
         run_model_pipeline(df, OmegaConf.to_container(cfg, resolve=True))
 
         # 6) Log artifacts directory if desired
@@ -94,7 +101,6 @@ def main(cfg: DictConfig) -> None:
                 artifact = wandb.Artifact(name, type=name)
                 artifact.add_file(path)
                 wandb_run.log_artifact(artifact, aliases=[run_name])
-
 
     except Exception as e:
         log.exception("Unexpected error during modeling step")

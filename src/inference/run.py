@@ -24,14 +24,16 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(PROJECT_ROOT))
 from src.inference.inference import run_inference  # your inference entrypoint
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── Helpers ────────────────────────────────────────────────────────────
+
 
 def _df_hash(df: pd.DataFrame) -> str:
     """Compute a stable hash of a DataFrame's contents + index."""
     raw = pd.util.hash_pandas_object(df, index=True).values
     return hashlib.sha256(raw).hexdigest()
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+# ── Entry point ────────────────────────────────────────────────────────
+
 
 @hydra.main(
     config_path=str(PROJECT_ROOT / "configs"),
@@ -75,10 +77,12 @@ def main(cfg: DictConfig) -> None:
             art = run.use_artifact("inference_data:latest")
             with tempfile.TemporaryDirectory() as tmp:
                 art_dir = Path(art.download(root=tmp))
-                files = list(art_dir.glob("*.csv")) + list(art_dir.glob("*.xlsx"))
+                files = (list(art_dir.glob("*.csv")) +
+                         list(art_dir.glob("*.xlsx")))
                 if files:
                     input_path = files[0]
-                    logger.info("Using artifact %s → %s", "inference_data:latest", input_path)
+                    logger.info("Using artifact %s → %s",
+                                "inference_data:latest", input_path)
         except Exception:
             logger.warning(
                 "Could not fetch artifact '%s'; using %s",
@@ -94,10 +98,12 @@ def main(cfg: DictConfig) -> None:
             schema = {col: str(dt) for col, dt in df_in.dtypes.items()}
             wandb.summary["input_schema"] = schema
             # record schema file
-            schema_path = PROJECT_ROOT / "artifacts" / f"infer_input_schema_{run.id[:8]}.json"
+            schema_path = (PROJECT_ROOT / "artifacts" /
+                           f"infer_input_schema_{run.id[:8]}.json")
             schema_path.parent.mkdir(parents=True, exist_ok=True)
             schema_path.write_text(json.dumps(schema, indent=2))
-            art_schema = wandb.Artifact("inference_input_schema", type="schema")
+            art_schema = wandb.Artifact("inference_input_schema",
+                                        type="schema")
             art_schema.add_file(str(schema_path))
             run.log_artifact(art_schema, aliases=["latest"])
         else:

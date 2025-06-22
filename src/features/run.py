@@ -2,8 +2,8 @@
 MLflow‐compatible feature‐engineering step with Hydra config and W&B logging.
 
 Loads the validated dataset artifact, applies each configured transformer
-from FEATURE_TRANSFORMERS, saves the engineered XLSX, and logs artifacts and summary
-metrics back to W&B.
+from FEATURE_TRANSFORMERS, saves the engineered XLSX, and logs artifacts
+and summary metrics back to W&B.
 """
 import sys
 import logging
@@ -15,12 +15,12 @@ from dotenv import load_dotenv
 import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
+import hydra
+import wandb
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(PROJECT_ROOT))
 from src.features.features import FEATURE_TRANSFORMERS
-
-import hydra
-import wandb
 
 # Load any .env keys (e.g. WANDB_API_KEY)
 load_dotenv()
@@ -33,7 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger("features")
 
 
-@hydra.main(config_path=str(PROJECT_ROOT / "configs"),\
+@hydra.main(config_path=str(PROJECT_ROOT / "configs"),
             config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     """
@@ -42,7 +42,8 @@ def main(cfg: DictConfig) -> None:
     Steps:
       1. Init W&B run
       2. Fetch validated data artifact
-      3. Loop through cfg.features.engineered, apply each transformer if enabled
+      3. Loop through cfg.features.engineered, apply each transformer
+         if enabled
       4. Save engineered dataset and log it as a W&B artifact
       5. Log summary metrics (n_rows, n_cols, applied_features, feature_params)
     """
@@ -69,8 +70,10 @@ def main(cfg: DictConfig) -> None:
             art_dir = Path(val_art.download(root=tmp_dir))
             excels = list(art_dir.glob("*.xlsx"))
             if not excels:
-                logger.error("No Excel file (.xlsx) found in validated_data artifact")
-                run.alert(title="Feature Eng Error", text="Missing validated_data Excel file")
+                logger.error("No Excel file (.xlsx) found"
+                             " in validated_data artifact")
+                run.alert(title="Feature Eng Error",
+                          text="Missing validated_data Excel file")
                 sys.exit(1)
             df = pd.read_excel(excels[0])
         if df.empty:
@@ -80,7 +83,8 @@ def main(cfg: DictConfig) -> None:
         applied = []
         params = {}
         if not cfg.features.get("enabled", True):
-            logger.info("Feature engineering is disabled. Skipping all transformers.")
+            logger.info("Feature engineering is disabled."
+                        " Skipping all transformers.")
         else:
             for feat in cfg.features.get("engineered", []):
                 builder = FEATURE_TRANSFORMERS.get(feat)

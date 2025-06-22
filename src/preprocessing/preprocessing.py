@@ -270,7 +270,7 @@ if __name__ == "__main__":
     python -m src.preprocessing.preprocessing <raw_data.xlsx> <config.yaml>
 
     WHY:
-    
+
     Allows ad-hoc preprocessing runs without writing additional scripts.
     Saves transformed data to data/processed/ for reproducibility
     and future use.

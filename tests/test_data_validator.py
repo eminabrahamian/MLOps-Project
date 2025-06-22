@@ -45,8 +45,10 @@ def config_and_schema(tmp_path):
             "report_path": str(tmp_path / "report.json"),
             "schema": {
                 "columns": [
-                    {"name": "id", "dtype": "int", "required": True, "min": 0, "max": 10},
-                    {"name": "cat", "dtype": "int", "required": False, "allowed_values": [0, 1]},
+                    {"name": "id", "dtype": "int",
+                     "required": True, "min": 0, "max": 10},
+                    {"name": "cat", "dtype": "int",
+                     "required": False, "allowed_values": [0, 1]},
                     {"name": "opt", "dtype": "float", "required": False},
                 ]
             }
@@ -110,8 +112,10 @@ def test_validate_column_sample_fallback(config_and_schema, monkeypatch):
     df = pd.DataFrame({"id": [1]})
     errors, warnings, report = [], [], {}
     series = df["id"]
-    monkeypatch.setattr(series, "dropna", lambda: (_ for _ in ()).throw(ValueError("fail")))
-    _validate_column(df, config["data_validation"]["schema"]["columns"][0], errors, warnings, report)
+    monkeypatch.setattr(series, "dropna",
+                        lambda: (_ for _ in ()).throw(ValueError("fail")))
+    _validate_column(df, config["data_validation"]["schema"]["columns"][0],
+                     errors, warnings, report)
     assert report["id"]["samples"] == []
 
 
@@ -161,7 +165,8 @@ def test_main_usage_error():
 
 def test_main_sys_exit_on_bad_args():
     result = subprocess.run(
-        ["coverage", "run", "-m", "src.data_validator.data_validator", "only-one.xlsx"],
+        ["coverage", "run", "-m",
+         "src.data_validator.data_validator", "only-one.xlsx"],
         capture_output=True,
         text=True,
         env={
@@ -209,7 +214,8 @@ def test_main_executes_directly(tmp_path, config_and_schema, monkeypatch):
     data_file = tmp_path / "data.xlsx"
     df.to_excel(data_file, index=False)
 
-    monkeypatch.setattr(sys, "argv", ["script.py", str(data_file), str(cfg_file)])
+    monkeypatch.setattr(sys, "argv", ["script.py",
+                                      str(data_file), str(cfg_file)])
 
     main()  # should complete without error
 
