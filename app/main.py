@@ -24,7 +24,7 @@ with open(PIPELINE_PATH, "rb") as f:
 with open(MODEL_PATH, "rb") as f:
     MODEL = pickle.load(f)
 
-FEATURES = CONFIG["raw_features"]
+FEATURES = CONFIG["original_features"]
 
 app = FastAPI()
 
@@ -107,20 +107,48 @@ def health():
 
 @app.post("/predict")
 def predict(payload: BreastCancerInput):
-    data = pd.DataFrame([payload.dict()])
+    data = pd.DataFrame([payload.dict()])  # Snake_case input
+
     try:
-        result_df = run_inference_df(data, config=CONFIG, return_proba=True)
+        # Step 1: Apply preprocessing
+        transformed = PIPELINE.transform(data)
+
+        # Step 2: Predict using preprocessed data
+        if hasattr(MODEL, "predict_proba"):
+            proba = MODEL.predict_proba(transformed)[:, 1]
+        else:
+            proba = [None] * len(data)
+
+        preds = MODEL.predict(transformed)
+
+        # Step 3: Return results
+        result = {
+            "prediction": int(preds[0]),
+            "probability": float(proba[0]) if proba[0] is not None else None
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    result = result_df.iloc[0]
+
     return {"prediction": int(result["prediction"]), "probability": float(result["probability"])}
 
 
 @app.post("/predict_batch")
 def predict_batch(payloads: list[BreastCancerInput]):
     df = pd.DataFrame([p.dict() for p in payloads])
+    
     try:
-        result_df = run_inference_df(df, config=CONFIG, return_proba=True)
+        transformed = PIPELINE.transform(df)
+        preds = MODEL.predict(transformed)
+
+        if hasattr(MODEL, "predict_proba"):
+            proba = MODEL.predict_proba(transformed)[:, 1]
+        else:
+            proba = [None] * len(df)
+
+        return [
+            {"prediction": int(p), "probability": float(prob) if prob is not None else None}
+            for p, prob in zip(preds, proba)
+        ]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return result_df[["prediction", "probability"]].to_dict(orient="records")
+
