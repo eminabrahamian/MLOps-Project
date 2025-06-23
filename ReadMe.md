@@ -1,84 +1,47 @@
 # Breast Cancer Classification MLOps Pipeline
 
-This repository implements a complete, end-to-end MLOps pipeline for binary classification on the Wisconsin Breast Cancer dataset (or any similar tabular dataset). It is fully driven by configuration files (`configs/config.yaml` and `environment.yml`) and orchestrated by the main script (`src/main.py`). The pipeline covers:
+[![CI](https://github.com/2025-IE-MLOps-course/mlops_project-CICD/actions/workflows/ci.yml/badge.svg)](https://github.com/2025-IE-MLOps-course/mlops_project-CICD/actions/workflows/ci.yml)
 
-1. **Data Ingestion & Validation**
-2. **Preprocessing & Feature Engineering**
-3. **Model Training & Evaluation**
-4. **Batch Inference**
-5. **Unit Testing & Linting**
-
-All code lives under `src/`, and test cases are under `tests/`. The environment is reproducible via `environment.yml`.  
+This repository implements a robust, modular MLOps pipeline for binary classification of breast cancer using the Wisconsin dataset. Designed for both academic and practical use, the project demonstrates best practices in reproducibility, configuration-driven workflows, and production-ready deployment.
 
 ---
 
-## Repository Layout
+## 🚦 Project Status
 
-```
-MLOps/
-├── configs/
-│   ├── config.yaml            ← Pipeline settings (paths, schema, hyperparameters, etc.)
-│   └── environment.yml        ← Conda environment definition
-│
-├── data/
-│   ├── raw/
-│   │   ├── cancer.xlsx        ← Original dataset
-│   │   └── new_inference_data.xlsx  ← Synthetic data for inference
-│   │
-│   ├── splits/                ← Raw train/valid/test splits (generated)
-│   │   ├── train_raw.csv
-│   │   ├── valid_raw.csv
-│   │   └── test_raw.csv
-│   │
-│   ├── processed/             ← Processed train/valid/test CSVs (generated)
-│   │   ├── train_processed.csv
-│   │   ├── valid_processed.csv
-│   │   └── test_processed.csv
-│   │
-│   └── inference_predictions/ ← Predictions from inference (generated)
-│       └── new_predictions.xlsx
-│
-├── logs/
-│   ├── main.log               ← Central pipeline log (generated)
-│   └── validation_report.json ← Data validation report (generated)
-│
-├── models/
-│   ├── preprocessing_pipeline.pkl  ← Serialized sklearn pipeline (generated)
-│   ├── active_model.pkl            ← Serialized trained KNN model (generated)
-│   └── metrics/
-│       ├── validation_metrics.json ← Validation split metrics (generated)
-│       ├── test_metrics.json       ← Test split metrics (generated)
-│       └── combined_metrics.json   ← Combined metrics report (generated)
-│
-├── notebooks/
-│   └── Manual & scikit KNN on Cancer Data.ipynb  ← Exploratory notebook (optional)
-│
-├── src/
-│   ├── data/
-│   │   ├── data_loader.py     ← Loads CSV/Excel into pandas DataFrame
-│   │   ├── data_validator.py  ← Validates DataFrame columns against schema
-│   │   └── preprocessing.py   ← Builds sklearn Pipeline from config
-│   │
-│   ├── features/
-│   │   └── features.py        ← Optional feature-engineering transformers
-│   │
-│   ├── evaluation/
-│   │   └── evaluation.py      ← Computes & saves classification metrics
-│   │
-│   ├── inference/
-│   │   └── inference.py       ← Loads pipeline + model, scores new data
-│   │
-│   ├── models/
-│   │   └── model.py           ← Splits data, trains KNN, evaluates & saves artifacts
-│   │
-│   ├── main.py                ← Orchestrates “data”, “train”, and “infer” stages
-│   └── __init__.py
-│
-├── tests/
-│   ├── test_data_loader.py    ← Unit tests for data_loader.py
-│   └── test_data_validator.py ← Unit tests for data_validator.py
-│
-└── README.md                  ← This file
+- **Modularized pipeline**: All steps (data ingestion, validation, preprocessing, training, evaluation, inference) are implemented as testable Python modules.
+- **Configuration-driven**: All settings are managed via `configs/config.yaml` for easy reproducibility and experimentation.
+- **Unit tested**: Extensive pytest coverage across all modules.
+- **API serving**: FastAPI app exposes prediction endpoints for real-time and batch inference.
+- **CI/CD**: Automated testing via GitHub Actions.
+- **Artifacts**: All models, metrics, and pipelines are versioned and stored for traceability.
+
+---
+
+## 📁 Repository Structure
+
+```text
+.
+├── configs/                  # YAML configs for pipeline and environment
+├── data/                     # Raw, split, processed, and inference data
+├── models/                   # Trained models, metrics, preprocessing pipelines
+├── logs/                     # Log files and validation reports
+├── notebooks/                # Exploratory Jupyter notebooks
+├── src/                      # All pipeline source code (modularized)
+│   ├── data_loader/          # Data loading utilities
+│   ├── data_validator/       # Schema and data validation
+│   ├── preprocessing/        # Preprocessing pipeline construction
+│   ├── features/             # Feature engineering (optional)
+│   ├── model/                # Model training and artifact management
+│   ├── evaluation/           # Model evaluation and metrics
+│   ├── inference/            # Batch inference logic
+│   └── main.py               # Pipeline orchestration entry point
+├── app/                      # FastAPI app for online serving
+├── tests/                    # Unit tests for all modules
+├── Dockerfile                # Containerization for deployment
+├── requirements.txt          # Python dependencies
+├── environment.yml           # Conda environment definition
+├── setup.sh                  # Setup script for local dev
+└── README.md                 # Project documentation
 ```
 
 ---
@@ -121,57 +84,22 @@ Make sure **all** feature lists match the column names exactly (case- and space-
 
 ## 3. How to Run the Pipeline
 
-### A. Data Ingestion & Validation Only
+**Run the pipeline using MLflow:**
 
-```bash
-python -m src.main   --config configs/config.yaml   --stage data
-```
+- **Full pipeline (all steps):**
+  ```bash
+  mlflow run . -P steps=all
+  ```
+- **Run specific steps (e.g., data, train, evaluation):**
+  ```bash
+  mlflow run . -P steps=data,train,evaluation
+  ```
+- **Batch inference:**
+  ```bash
+  mlflow run . -P steps=infer -P input_csv=data/raw/new_inference_data.xlsx -P output_csv=data/inference_predictions/new_predictions.xlsx
+  ```
 
-- Reads raw data from `data_source.path` (Excel or CSV).  
-- Validates against `data_validation.schema` and writes `validation_report.json`.  
-
-### B. Full Training Pipeline
-
-```bash
-python -m src.main   --config configs/config.yaml   --stage all
-```
-
-Equivalent to running both `--stage data` and `--stage train`:
-
-1. **Data Stage**  
-   - Loads and validates raw data.  
-
-2. **Training Stage**  
-   - Splits into train/valid/test using `raw_features` and `target`.  
-   - Builds & fits preprocessing pipeline **on train only**.  
-   - Transforms splits, reattaches `target`, and writes processed CSVs to `data/processed/`.  
-   - Saves pipeline to `models/preprocessing_pipeline.pkl`.  
-   - Trains a KNN (`n_neighbors`, `weights`, `metric` from config) on processed train set.  
-   - Saves trained model to `models/active_model.pkl`.  
-   - Evaluates on validation & test using `evaluate_classification`, writes JSON metrics under `models/metrics/`.  
-
-After completion, you should see:
-
-- `data/splits/{train_raw.csv, valid_raw.csv, test_raw.csv}`  
-- `data/processed/{train_processed.csv, valid_processed.csv, test_processed.csv}`  
-- `models/preprocessing_pipeline.pkl`  
-- `models/active_model.pkl`  
-- `models/metrics/{validation_metrics.json, test_metrics.json, combined_metrics.json}`  
-- `logs/main.log` and `logs/validation_report.json`
-
-### C. Batch Inference
-
-> **Prerequisite**: You must have a trained model and pipeline (`models/preprocessing_pipeline.pkl` and `models/active_model.pkl`).
-
-```bash
-python -m src.main   --config configs/config.yaml   --stage infer   --input_csv data/raw/new_inference_data.xlsx   --output_csv data/inference_predictions/new_predictions.xlsx
-```
-
-- Reads new data (`.xlsx` or `.csv`), validates it.  
-- Loads pickled pipeline & model, applies pipeline to new DataFrame (wraps results to DataFrame so KNN sees correct feature names).  
-- Predicts (and probability if `return_proba: true`).  
-- Writes predictions (and class probabilities) to `data/inference_predictions/new_predictions.xlsx`.  
-- Logs completion in `logs/main.log`.
+All steps, parameters, and artifact paths are controlled via `configs/config.yaml`.
 
 ---
 
@@ -182,7 +110,8 @@ Unit tests are located under `tests/`:
 ```
 tests/
 ├── test_data_loader.py
-└── test_data_validator.py
+├── test_data_validator.py
+├── ...
 ```
 
 Run all tests with coverage:
@@ -219,7 +148,7 @@ Ensure code conforms to PEP8 and avoids unused imports or undefined variables.
 3. **Missing Column Errors**  
    - If inference complains `"columns are missing: {...}"`, verify that `features.feature_columns` in `config.yaml` exactly matches the columns in your input file (`new_inference_data.xlsx`).
 
-4. **“X does not have valid feature names” Warning**  
+4. **"X does not have valid feature names" Warning**  
    - The code wraps the transformed NumPy array into a DataFrame with the original feature names before calling `model.predict()`. Ensure you have the latest `src/inference.py`.
 
 5. **Excel Read/Write Errors**  
@@ -228,13 +157,42 @@ Ensure code conforms to PEP8 and avoids unused imports or undefined variables.
 
 ---
 
-## 7. Contributing
+## 7. API Serving
 
-- To add new models (e.g., Random Forest), update `model.active` and `model.<algorithm>.params` in `config.yaml`, then extend `src/model.py` to handle the new algorithm.  
-- To add new feature transformers, implement them in `src/features.py` and enable them under `preprocessing` in the config.  
-- For any bugs or improvements, please open an issue or submit a pull request.
+**Serve the model via FastAPI:**
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+- Access `/docs` for interactive API documentation.
 
 ---
 
-With this README, a new user can clone the repo, create the environment, tweak configuration, and run the entire pipeline from raw data to batch inference. Good luck!
+## 8. Docker Deployment
 
+**Build and run the API locally:**
+```bash
+docker build -t breast-cancer-api .
+docker run --env-file .env -p 8000:8000 breast-cancer-api
+```
+- The server uses the `PORT` environment variable (default: 8000).
+
+---
+
+## 9. Academic Notes
+
+- Demonstrates best practices in modularity, testing, and reproducibility.
+- All logic is config-driven for easy extension and experimentation.
+- Suitable for both teaching and real-world MLOps scenarios.
+
+---
+
+## 👩‍💻 Authors and Acknowledgments
+
+- Developed as part of the IE University MLOps curriculum.
+- Inspired by open-source MLOps projects and healthcare analytics use cases.
+
+---
+
+## 📜 License
+
+This project is for academic and educational purposes.
