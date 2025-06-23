@@ -29,6 +29,14 @@ FEATURES = CONFIG["original_features"]
 app = FastAPI()
 
 class BreastCancerInput(BaseModel):
+    """
+    Defines the input schema for breast cancer prediction.
+
+    This Pydantic model ensures that the incoming JSON matches
+    the structure and types required by the model pipeline.
+    All fields represent diagnostic features extracted from scans.
+    """
+    
     mean_radius: float
     mean_texture: float
     mean_perimeter: float
@@ -61,6 +69,10 @@ class BreastCancerInput(BaseModel):
     worst_fractal_dimension: float
 
     class Config:
+        """
+        Example payload shown in the Swagger UI for user guidance.
+        """
+
         schema_extra = {
             "example": {
                 "mean_radius": 17.99,
@@ -99,14 +111,36 @@ class BreastCancerInput(BaseModel):
 
 @app.get("/")
 def root():
+    """
+    Root endpoint for health awareness.
+
+    Returns a welcome message to confirm that the API is live.
+    """
+
     return {"message": "Welcome to the Breast Cancer Prediction API"}
 
 @app.get("/health")
 def health():
+    """
+    Basic health check endpoint.
+
+    Useful for automated probes or service monitoring.
+    """
+
     return {"status": "ok"}
 
 @app.post("/predict")
 def predict(payload: BreastCancerInput):
+    """
+    Predict the likelihood of breast cancer for a single observation.
+
+    Parameters:
+        payload (BreastCancerInput): A JSON object containing feature values.
+
+    Returns:
+        dict: The predicted class label and probability (if available).
+    """
+
     data = pd.DataFrame([payload.dict()])  # Snake_case input
 
     try:
@@ -134,8 +168,18 @@ def predict(payload: BreastCancerInput):
 
 @app.post("/predict_batch")
 def predict_batch(payloads: list[BreastCancerInput]):
+    """
+    Predict outcomes for a batch of observations.
+
+    Parameters:
+        payloads (list[BreastCancerInput]): List of records with raw features.
+
+    Returns:
+        list[dict]: List of predictions with class and probability.
+    """
+
     df = pd.DataFrame([p.dict() for p in payloads])
-    
+
     try:
         transformed = PIPELINE.transform(df)
         preds = MODEL.predict(transformed)
