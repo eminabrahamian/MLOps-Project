@@ -5,12 +5,9 @@ Covers:
 - Creating a temporary artifact directory
 - Pretending to download model + pipeline artifacts
 - Ensuring both files are present and accessible
-
-Useful for verifying logic in functions like `run_inference_df()` and orchestrator setups.
 """
 
 from pathlib import Path
-import pytest
 
 
 class DummyArtifact:
@@ -44,4 +41,5 @@ def test_artifact_download_structure(tmp_path):
 
     # Optional: confirm contents
     assert (download_path / "model.pkl").read_text() == "fake-model"
-    assert (download_path / "preprocessing_pipeline.pkl").read_text() == "fake-pipeline"
+    assert (download_path /
+            "preprocessing_pipeline.pkl").read_text() == "fake-pipeline"

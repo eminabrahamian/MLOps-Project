@@ -54,7 +54,8 @@ EXAMPLE_INPUT = {
 def test_root():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Welcome to the Breast Cancer Prediction API"}
+    assert response.json() == {"message":
+                               "Welcome to the Breast Cancer Prediction API"}
 
 
 def test_health():
