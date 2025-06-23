@@ -1,10 +1,297 @@
+main:
+  wandb:
+    project: mlops_project
+    entity: eminabrahamian-ie-university
+  steps: all
+  hydra_options: ''
+
 data_source:
-  encoding: null
-  header: 0
-  raw_path: /private/var/folders/jh/6hm_jsh52csbx0lg94qs0w_m0000gn/T/pytest-of-Emin/pytest-64/test_data_loader_warns_on_empt0/empty.xlsx
-  sheet_name: Sheet1
+  raw_path: ./data/raw/cancer.xlsx
+  processed_path: ./data/processed/cancer_processed.xlsx
   type: excel
+  sheet_name: Sheet1
+  header: 0
+  encoding: utf-8
+
+data_load:
+  data_stage: raw
+  output_dir: artifacts
+  log_artifacts: true
+  log_summary_stats: true
+  log_sample_artifacts: true
+
+features:
+  enabled: false
+  log_artifacts: true
+
+preprocessing:
+  log_artifacts: true
+  log_pipeline: true
+  rename_columns:
+    mean radius: mean_radius
+    mean texture: mean_texture
+    mean perimeter: mean_perimeter
+    mean area: mean_area
+    mean smoothness: mean_smoothness
+    mean compactness: mean_compactness
+    mean concavity: mean_concavity
+    mean concave points: mean_concave_points
+    mean symmetry: mean_symmetry
+    mean fractal dimension: mean_fractal_dimension
+    radius error: radius_error
+    texture error: texture_error
+    perimeter error: perimeter_error
+    area error: area_error
+    smoothness error: smoothness_error
+    compactness error: compactness_error
+    concavity error: concavity_error
+    concave points error: concave_points_error
+    symmetry error: symmetry_error
+    fractal dimension error: fractal_dimension_error
+    worst radius: worst_radius
+    worst texture: worst_texture
+    worst perimeter: worst_perimeter
+    worst area: worst_area
+    worst smoothness: worst_smoothness
+    worst compactness: worst_compactness
+    worst concavity: worst_concavity
+    worst concave points: worst_concave_points
+    worst symmetry: worst_symmetry
+    worst fractal dimension: worst_fractal_dimension
+
+evaluation:
+  splits:
+  - train
+  - valid
+  - test
+
+inference:
+  input_file: ./data/raw/new_inference_data.xlsx
+  output_file: ./data/inference_predictions/new_predictions.xlsx
+
 logging:
-  format: '%(message)s'
   level: INFO
-  log_file: /private/var/folders/jh/6hm_jsh52csbx0lg94qs0w_m0000gn/T/pytest-of-Emin/pytest-64/test_data_loader_warns_on_empt0/empty.log
+  log_file: ./logs/main.log
+  format: '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
+  datefmt: '%Y-%m-%d %H:%M:%S'
+
+data_split:
+  test_size: 0.2
+  valid_size: 0.2
+  random_state: 42
+
+model:
+  type: knn
+  params:
+    n_neighbors: 5
+    metric: cosine
+    random_state: 42
+
+target: target
+
+original_features:
+- mean radius
+- mean texture
+- mean perimeter
+- mean area
+- mean smoothness
+- mean compactness
+- mean concavity
+- mean concave points
+- mean symmetry
+- mean fractal dimension
+- radius error
+- texture error
+- perimeter error
+- area error
+- smoothness error
+- compactness error
+- concavity error
+- concave points error
+- symmetry error
+- fractal dimension error
+- worst radius
+- worst texture
+- worst perimeter
+- worst area
+- worst smoothness
+- worst compactness
+- worst concavity
+- worst concave points
+- worst symmetry
+- worst fractal dimension
+
+raw_features:
+- mean_radius
+- mean_texture
+- mean_perimeter
+- mean_area
+- mean_smoothness
+- mean_compactness
+- mean_concavity
+- mean_concave_points
+- mean_symmetry
+- mean_fractal_dimension
+- radius_error
+- texture_error
+- perimeter_error
+- area_error
+- smoothness_error
+- compactness_error
+- concavity_error
+- concave_points_error
+- symmetry_error
+- fractal_dimension_error
+- worst_radius
+- worst_texture
+- worst_perimeter
+- worst_area
+- worst_smoothness
+- worst_compactness
+- worst_concavity
+- worst_concave_points
+- worst_symmetry
+- worst_fractal_dimension
+
+artifacts:
+  processed_dir: data/processed
+  preprocessing_pipeline: models/preprocessing_pipeline.pkl
+  model_path: models/active_model.pkl
+  metrics_dir: models/
+
+data_validation:
+  enabled: true
+  action_on_error: raise
+  report_path: logs/validation_report.json
+  schema:
+    columns:
+    - name: id
+      dtype: int
+      required: true
+      min: 0
+    - name: mean radius
+      dtype: float
+      required: false
+      min: 0.0
+    - name: mean texture
+      dtype: float
+      required: false
+      min: 0.0
+    - name: mean perimeter
+      dtype: float
+      required: false
+      min: 0.0
+    - name: mean area
+      dtype: float
+      required: false
+      min: 0.0
+    - name: mean smoothness
+      dtype: float
+      required: false
+      min: 0.0
+    - name: mean compactness
+      dtype: float
+      required: false
+      min: 0.0
+    - name: mean concavity
+      dtype: float
+      required: false
+      min: 0.0
+    - name: mean concave points
+      dtype: float
+      required: false
+      min: 0.0
+    - name: mean symmetry
+      dtype: float
+      required: false
+      min: 0.0
+    - name: mean fractal dimension
+      dtype: float
+      required: false
+      min: 0.0
+    - name: radius error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: texture error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: perimeter error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: area error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: smoothness error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: compactness error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: concavity error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: concave points error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: symmetry error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: fractal dimension error
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst radius
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst texture
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst perimeter
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst area
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst smoothness
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst compactness
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst concavity
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst concave points
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst symmetry
+      dtype: float
+      required: false
+      min: 0.0
+    - name: worst fractal dimension
+      dtype: float
+      required: false
+      min: 0.0
+    - name: target
+      dtype: int
+      required: true
+      allowed_values:
+      - 0
+      - 1
