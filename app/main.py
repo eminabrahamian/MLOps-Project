@@ -5,7 +5,6 @@ import pickle
 import yaml
 import sys
 from pathlib import Path
-from src.inference.inference import run_inference_df
 
 
 # Add the root directory to sys.path
@@ -36,7 +35,7 @@ class BreastCancerInput(BaseModel):
     the structure and types required by the model pipeline.
     All fields represent diagnostic features extracted from scans.
     """
-    
+
     mean_radius: float
     mean_texture: float
     mean_perimeter: float

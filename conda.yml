@@ -9,6 +9,8 @@ dependencies:
   - hydra-core             # @hydra.main, config management
   - omegaconf              # DictConfig + OmegaConf.to_container
   - pip
+  - dvc
+  - dvc-s3
   - pip:
     - mlflow-skinny          # mlflow.run orchestrator calls
     - wandb                  # wandb.init, wandb.alert, wandb.finish
