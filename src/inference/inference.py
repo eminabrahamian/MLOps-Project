@@ -379,5 +379,65 @@ def main() -> None:
     )
 
 
+def run_inference_df(
+    raw_df: pd.DataFrame,
+    config: dict,
+    return_proba: bool = False,
+) -> pd.DataFrame:
+    """
+    Run inference on an in-memory DataFrame.
+
+    Mirrors the run_inference file-based logic but avoids I/O,
+    making it suitable for use in web APIs or notebooks.
+
+    Parameters
+    ----------
+    raw_df : pd.DataFrame
+        Input data containing raw feature columns.
+    config : dict
+        Loaded YAML config dictionary.
+    return_proba : bool, optional
+        Whether to include predicted probabilities, by default False.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with predictions (and optionally probabilities) appended.
+    """
+    try:
+        # 1. Load preprocessing pipeline and model
+        artifacts = config.get("artifacts", {})
+        pipeline_path = Path(PROJECT_ROOT) / artifacts.get("preprocessing_pipeline")
+        model_path = Path(PROJECT_ROOT) / artifacts.get("model_path")
+
+        pipeline = load_pipeline(pipeline_path)
+        model = load_model(model_path)
+
+        # 2. Extract required features
+        required_feats = config.get("original_features", [])
+        missing = [feat for feat in required_feats if feat not in raw_df.columns]
+        if missing:
+            raise ValueError(f"Missing required input features: {missing}")
+
+        # 3. Preprocess input
+        X_array = preprocess_inference_data(raw_df, pipeline, required_feats)
+        X_df = pd.DataFrame(X_array, columns=required_feats)
+
+        # 4. Predict
+        preds = make_predictions(model, X_df, return_proba)
+
+        # 5. Return results merged with input
+        result_df = raw_df.copy()
+        result_df["prediction"] = preds["prediction"]
+        if return_proba and "prediction_proba" in preds:
+            result_df["prediction_proba"] = preds["prediction_proba"]
+
+        return result_df
+
+    except Exception as e:
+        logger.exception("Inference from DataFrame failed: %s", e)
+        raise e
+
+
 if __name__ == "__main__":
     main()
