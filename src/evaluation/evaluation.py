@@ -290,13 +290,16 @@ def generate_split_report(
 
     # Safe fallbacks with proper type conversion
     processed_dir = PROJECT_ROOT / (
-        Path(processed_dir) if processed_dir is not None else Path(cfg_art.get("processed_dir", "data/processed"))
+        Path(processed_dir) if processed_dir is not None else
+        Path(cfg_art.get("processed_dir", "data/processed"))
     )
     model_path = PROJECT_ROOT / (
-        Path(model_path) if model_path is not None else Path(cfg_art.get("model_path", "models/model.pkl"))
+        Path(model_path) if model_path is not None
+        else Path(cfg_art.get("model_path", "models/model.pkl"))
     )
     metrics_dir = PROJECT_ROOT / (
-        Path(save_path) if save_path is not None else Path(cfg_art.get("metrics_dir", "models"))
+        Path(save_path) if save_path is not None
+        else Path(cfg_art.get("metrics_dir", "models"))
     )
     target_col = config.get("target")
     report: Dict[str, Any] = {}
@@ -309,7 +312,8 @@ def generate_split_report(
 
     df_split = pd.read_excel(split_file)
     if target_col not in df_split.columns:
-        logger.error("Target column '%s' missing in %s", target_col, split_file)
+        logger.error("Target column '%s' missing in %s",
+                     target_col, split_file)
         return report
 
     X = df_split.drop(columns=[target_col]).values
