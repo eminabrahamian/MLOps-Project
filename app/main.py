@@ -27,6 +27,7 @@ FEATURES = CONFIG["original_features"]
 
 app = FastAPI()
 
+
 class BreastCancerInput(BaseModel):
     """
     Defines the input schema for breast cancer prediction.
@@ -118,6 +119,7 @@ def root():
 
     return {"message": "Welcome to the Breast Cancer Prediction API"}
 
+
 @app.get("/health")
 def health():
     """
@@ -127,6 +129,7 @@ def health():
     """
 
     return {"status": "ok"}
+
 
 @app.post("/predict")
 def predict(payload: BreastCancerInput):
@@ -162,7 +165,8 @@ def predict(payload: BreastCancerInput):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    return {"prediction": int(result["prediction"]), "probability": float(result["probability"])}
+    return {"prediction": int(result["prediction"]),
+            "probability": float(result["probability"])}
 
 
 @app.post("/predict_batch")
@@ -189,9 +193,9 @@ def predict_batch(payloads: list[BreastCancerInput]):
             proba = [None] * len(df)
 
         return [
-            {"prediction": int(p), "probability": float(prob) if prob is not None else None}
+            {"prediction": int(p), "probability": float(prob)
+             if prob is not None else None}
             for p, prob in zip(preds, proba)
         ]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-

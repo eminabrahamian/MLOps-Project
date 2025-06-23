@@ -24,6 +24,7 @@ from src.preprocessing.preprocessing import (
     run_preprocessing_pipeline,
 )
 
+
 @pytest.fixture
 def simple_df():
     return pd.DataFrame({
@@ -41,6 +42,7 @@ def simple_df():
         ],
         "extra": [10, 20, 30, 40],
     })
+
 
 @pytest.fixture
 def minimal_config():
@@ -75,11 +77,13 @@ def minimal_config():
         "raw_features": ["num", "cat", "extra"],
     }
 
+
 def test_column_renamer_noop():
     df = pd.DataFrame({"a": [1], "b": [2]})
     ren = ColumnRenamer({})
     out = ren.transform(df)
     pd.testing.assert_frame_equal(out, df)
+
 
 def test_column_renamer_mapping():
     df = pd.DataFrame({"old": [1], "b": [2]})
@@ -87,12 +91,14 @@ def test_column_renamer_mapping():
     out = ren.transform(df)
     assert "new" in out.columns and "old" not in out.columns
 
+
 def test_build_pipeline_minimal(minimal_config):
     pipe = build_preprocessing_pipeline(minimal_config)
     names = [name for name, _ in pipe.steps]
     assert "risk_score" in names
     assert "rename" in names
     assert "col_transform" in names
+
 
 def test_run_preprocessing_pipeline_integration(minimal_config):
     df = pd.DataFrame({
@@ -104,12 +110,15 @@ def test_run_preprocessing_pipeline_integration(minimal_config):
     assert df_out.shape[0] == 3
     assert not df_out.isnull().any().any()
 
+
 def test_get_output_feature_names_fallback(simple_df, minimal_config):
     pipe = build_preprocessing_pipeline(minimal_config)
     pipe.fit(simple_df[["num", "cat", "extra"]])
-    names = get_output_feature_names(pipe, ["num", "cat", "extra"], minimal_config)
+    names = get_output_feature_names(pipe,
+                                     ["num", "cat", "extra"], minimal_config)
     assert isinstance(names, list)
     assert "extra" in names
+
 
 def test_bmi_step_and_values(simple_df, minimal_config):
     cfg = copy.deepcopy(minimal_config)
@@ -126,6 +135,7 @@ def test_bmi_step_and_values(simple_df, minimal_config):
     transformed = pipe.fit_transform(simple_df)
     assert transformed.shape[0] == simple_df.shape[0]
 
+
 def test_outlier_flagging(simple_df, minimal_config):
     cfg = copy.deepcopy(minimal_config)
     cfg["preprocessing"]["outlier_columns"] = ["num"]
@@ -138,10 +148,12 @@ def test_outlier_flagging(simple_df, minimal_config):
     out_names = get_output_feature_names(pipe, simple_df.columns.tolist(), cfg)
     assert any("num_outlier" in nm for nm in out_names)
 
+
 def test_datetime_features(simple_df, minimal_config):
     cfg = copy.deepcopy(minimal_config)
     cfg["preprocessing"]["datetime_column"] = "date"
-    for fld in ["date", "day_of_week", "month", "hour", "hour_sin", "hour_cos"]:
+    for fld in ["date", "day_of_week", "month",
+                "hour", "hour_sin", "hour_cos"]:
         cfg["raw_features"].append(fld)
 
     pipe = build_preprocessing_pipeline(cfg)
@@ -150,7 +162,6 @@ def test_datetime_features(simple_df, minimal_config):
     out_names = get_output_feature_names(pipe, simple_df.columns.tolist(), cfg)
     assert any("month" in nm for nm in out_names)
 
-# ✅ Additional Tests for Coverage
 
 def test_passthrough_fallback_only(simple_df, minimal_config):
     cfg = copy.deepcopy(minimal_config)
@@ -161,6 +172,7 @@ def test_passthrough_fallback_only(simple_df, minimal_config):
     pipe.fit(simple_df)
     names = get_output_feature_names(pipe, simple_df.columns.tolist(), cfg)
     assert set(["num", "cat", "extra"]).issubset(names)
+
 
 def test_column_renamer_affects_passthrough():
     df = pd.DataFrame({"x": [1], "extra": [5]})
@@ -180,6 +192,7 @@ def test_column_renamer_affects_passthrough():
     out = pipe.fit_transform(df)
     assert out.shape[0] == 1
 
+
 def test_feature_names_no_get_feature_names_out():
     class Dummy(BaseEstimator, TransformerMixin):
         def fit(self, X, y=None): return self
@@ -195,6 +208,7 @@ def test_feature_names_no_get_feature_names_out():
         "raw_features": ["num", "cat"]
     })
     assert set(["num", "cat"]).issubset(names)
+
 
 def test_standard_scaler_and_bucketize(simple_df, minimal_config):
     cfg = copy.deepcopy(minimal_config)
@@ -219,7 +233,8 @@ def test_drop_column_skipped_in_output_names():
     )
     pipe = Pipeline([("col_transform", ct)])
     pipe.fit(df)
-    names = get_output_feature_names(pipe, df.columns.tolist(), {"raw_features": ["a", "b"]})
+    names = get_output_feature_names(pipe, df.columns.tolist(),
+                                     {"raw_features": ["a", "b"]})
     assert "a" in names and "b" not in names
 
 
@@ -238,7 +253,9 @@ def test_named_steps_without_get_feature_names_out():
     top_pipe = Pipeline([("col_transform", ct)])
     df = pd.DataFrame({"num": [1.0]})
     top_pipe.fit(df)
-    out_names = get_output_feature_names(top_pipe, df.columns.tolist(), {"raw_features": ["num"]})
+    out_names = get_output_feature_names(top_pipe,
+                                         df.columns.tolist(),
+                                         {"raw_features": ["num"]})
     assert "num" in out_names
 
 
@@ -250,8 +267,11 @@ def test_skip_drop_transformer_in_output_names():
     ])
     pipe = Pipeline([("col_transform", ct)])
     pipe.fit(df)
-    out_names = get_output_feature_names(pipe, df.columns.tolist(), {"raw_features": ["a", "b"]})
+    out_names = get_output_feature_names(pipe,
+                                         df.columns.tolist(),
+                                         {"raw_features": ["a", "b"]})
     assert "a" in out_names and "b" not in out_names
+
 
 def test_named_steps_no_feature_names_out_fallback():
     class StepNoNames(BaseEstimator, TransformerMixin):
@@ -267,8 +287,11 @@ def test_named_steps_no_feature_names_out_fallback():
     top = Pipeline([("col_transform", ct)])
     df = pd.DataFrame({"x": [1]})
     top.fit(df)
-    out_names = get_output_feature_names(top, df.columns.tolist(), {"raw_features": ["x"]})
+    out_names = get_output_feature_names(top,
+                                         df.columns.tolist(),
+                                         {"raw_features": ["x"]})
     assert "x" in out_names
+
 
 def test_final_else_fallback_feature_names():
     class UnknownTransformer(BaseEstimator, TransformerMixin):
@@ -281,5 +304,7 @@ def test_final_else_fallback_feature_names():
     pipe = Pipeline([("col_transform", ct)])
     df = pd.DataFrame({"z": [1]})
     pipe.fit(df)
-    names = get_output_feature_names(pipe, df.columns.tolist(), {"raw_features": ["z"]})
+    names = get_output_feature_names(pipe,
+                                     df.columns.tolist(),
+                                     {"raw_features": ["z"]})
     assert "z" in names

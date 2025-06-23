@@ -407,7 +407,8 @@ def run_inference_df(
     try:
         # 1. Load preprocessing pipeline and model
         artifacts = config.get("artifacts", {})
-        pipeline_path = Path(PROJECT_ROOT) / artifacts.get("preprocessing_pipeline")
+        pipeline_path = (Path(PROJECT_ROOT) /
+                         artifacts.get("preprocessing_pipeline"))
         model_path = Path(PROJECT_ROOT) / artifacts.get("model_path")
 
         pipeline = load_pipeline(pipeline_path)
@@ -415,7 +416,8 @@ def run_inference_df(
 
         # 2. Extract required features
         required_feats = config.get("original_features", [])
-        missing = [feat for feat in required_feats if feat not in raw_df.columns]
+        missing = [feat for feat in required_feats
+                   if feat not in raw_df.columns]
         if missing:
             raise ValueError(f"Missing required input features: {missing}")
 

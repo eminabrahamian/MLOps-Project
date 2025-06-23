@@ -13,10 +13,8 @@ Covers:
   - Uses tmp_path for all file outputs to avoid polluting project
 """
 
-import pickle
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import pytest
 from sklearn.neighbors import KNeighborsClassifier
@@ -137,8 +135,10 @@ def test_run_model_pipeline_end_to_end(minimal_train_config):
 
     # Assert processed data exists
     for split in ["train", "valid", "test"]:
-        assert (Path(cfg["artifacts"]["processed_dir"]) / f"{split}_processed.csv").exists()
-        assert (Path(cfg["artifacts"]["splits_dir"]) / f"{split}_raw.csv").exists()
+        assert (Path(cfg["artifacts"]["processed_dir"]) /
+                f"{split}_processed.csv").exists()
+        assert (Path(cfg["artifacts"]["splits_dir"]) /
+                f"{split}_raw.csv").exists()
 
 
 def test_run_model_pipeline_invalid_model(minimal_train_config):
@@ -155,12 +155,15 @@ def test_run_model_pipeline_missing_target(minimal_train_config):
         run_model_pipeline(df, cfg)
 
 
-def test_run_model_pipeline_with_model_override(monkeypatch, minimal_train_config):
+def test_run_model_pipeline_with_model_override(monkeypatch,
+                                                minimal_train_config):
     df, cfg = minimal_train_config
 
     # Provide model-specific params at incorrect level
     cfg["model"]["model"] = {
-        "params": {"n_neighbors": 1, "weights": "uniform", "metric": "minkowski"}
+        "params": {"n_neighbors": 1,
+                   "weights": "uniform",
+                   "metric": "minkowski"}
     }
 
     run_model_pipeline(df, cfg)
