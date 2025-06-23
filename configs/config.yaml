@@ -90,7 +90,6 @@ model:
 target: target
 
 original_features:
-- id
 - mean radius
 - mean texture
 - mean perimeter

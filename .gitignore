@@ -49,3 +49,4 @@ wandb/
 
 # Hydra config files
 outputs/
+/data
