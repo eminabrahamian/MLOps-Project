@@ -38,6 +38,7 @@ from src.inference.inference import (
     run_inference,
     save_predictions,
     setup_logger,
+    run_inference_df,
 )
 
 
@@ -67,7 +68,6 @@ class DummyModel:
         return np.zeros((X.shape[0],), dtype=int)
 
     def predict_proba(self, X):
-        # return equal class probabilities
         return np.tile([0.5, 0.5], (X.shape[0], 1))
 
 
@@ -347,3 +347,59 @@ def test_run_inference_invalid_feature_names(tmp_path, temp_inference_artifacts)
             str(tmp_path / "fail_preds.xlsx"),
             return_proba=False
         )
+
+def test_run_inference_df_basic(temp_inference_artifacts):
+    """
+    run_inference_df should return predictions for valid input.
+    """
+    _, cfg, _, _ = temp_inference_artifacts
+    df = pd.DataFrame({"f1": [1.0], "f2": [2.0]})
+    result = run_inference_df(df, cfg, return_proba=True)
+
+    assert "prediction" in result.columns
+    assert "prediction_proba" in result.columns
+    assert result.shape[0] == 1
+
+
+def test_run_inference_df_missing_column(temp_inference_artifacts):
+    """
+    run_inference_df should raise ValueError if required columns are missing.
+    """
+    _, cfg, _, _ = temp_inference_artifacts
+    df = pd.DataFrame({"f1": [1.0]})  # missing "f2"
+    with pytest.raises(ValueError, match="Missing required input features"):
+        run_inference_df(df, cfg)
+
+
+def test_run_inference_df_model_failure(temp_inference_artifacts, monkeypatch):
+    """
+    run_inference_df should raise InferenceError if model.predict fails.
+    """
+    _, cfg, _, _ = temp_inference_artifacts
+
+    class BadModel:
+        def predict(self, X):
+            raise RuntimeError("intentional failure")
+
+    monkeypatch.setattr("src.inference.inference.load_model", lambda _: BadModel())
+
+    df = pd.DataFrame({"f1": [1.0], "f2": [2.0]})
+    with pytest.raises(InferenceError, match="intentional failure"):
+        run_inference_df(df, cfg)
+
+
+def test_run_inference_df_pipeline_missing_feature(monkeypatch, temp_inference_artifacts):
+    """
+    run_inference_df should raise if pipeline transform fails due to shape mismatch.
+    """
+    _, cfg, _, _ = temp_inference_artifacts
+
+    class BadPipeline:
+        def transform(self, X):
+            raise ValueError("bad input shape")
+
+    monkeypatch.setattr("src.inference.inference.load_pipeline", lambda _: BadPipeline())
+
+    df = pd.DataFrame({"f1": [1.0], "f2": [2.0]})
+    with pytest.raises(ValueError, match="bad input shape"):
+        run_inference_df(df, cfg)

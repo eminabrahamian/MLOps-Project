@@ -428,9 +428,13 @@ def run_inference_df(
 
         # 5. Return results merged with input
         result_df = raw_df.copy()
-        result_df["prediction"] = preds["prediction"]
-        if return_proba and "prediction_proba" in preds:
-            result_df["prediction_proba"] = preds["prediction_proba"]
+        if isinstance(preds, tuple):
+            pred_arr, proba_arr = preds
+            result_df["prediction"] = pred_arr
+            if return_proba:
+                result_df["prediction_proba"] = proba_arr[:, 1]
+        else:
+            result_df["prediction"] = preds
 
         return result_df
 
