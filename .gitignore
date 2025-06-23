@@ -19,6 +19,8 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+.coverage
+.coveragearc
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -50,3 +52,6 @@ wandb/
 # Hydra config files
 outputs/
 /data
+
+# Artifacts
+artifacts/
