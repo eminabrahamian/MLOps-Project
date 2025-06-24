@@ -136,9 +136,9 @@ def test_run_model_pipeline_end_to_end(minimal_train_config):
     # Assert processed data exists
     for split in ["train", "valid", "test"]:
         assert (Path(cfg["artifacts"]["processed_dir"]) /
-                f"{split}_processed.csv").exists()
+                f"{split}_processed.xlsx").exists()
         assert (Path(cfg["artifacts"]["splits_dir"]) /
-                f"{split}_raw.csv").exists()
+                f"{split}_raw.xlsx").exists()
 
 
 def test_run_model_pipeline_invalid_model(minimal_train_config):
