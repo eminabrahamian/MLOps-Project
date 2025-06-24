@@ -25,3 +25,8 @@ dependencies:
     - pytest-cov
     - pykernel
     - flake8
+    - mlflow
+    - mlflow-skinny
+    - fastapi
+    - httpx
+    - wandb
