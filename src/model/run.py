@@ -100,8 +100,8 @@ def main(cfg: DictConfig) -> None:
         # 6) Log artifacts directory if desired
         art_cfg = cfg.get("artifacts", {})
         for name, path in {
-            "preprocessor": art_cfg.get("preprocessing_pipeline"),
-            "model": art_cfg.get("model_path"),
+            "preprocessor": Path(PROJECT_ROOT) / Path(art_cfg.get("preprocessing_pipeline")),
+            "model": Path(PROJECT_ROOT) / Path(art_cfg.get("model_path")),
         }.items():
             if path:
                 artifact = wandb.Artifact(name, type=name)

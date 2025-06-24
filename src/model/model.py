@@ -23,6 +23,8 @@ from src.preprocessing.preprocessing import (
     get_output_feature_names,
 )
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
@@ -166,19 +168,20 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
         stratify=y_train_valid,
     )
 
-    # Save raw splits to CSV
+    # Save raw splits to Excel
     splits_dir = Path(
         config.get("artifacts", {}).get("splits_dir", "data/splits")
     )
-    splits_dir.mkdir(parents=True, exist_ok=True)
-    pd.concat([X_train, y_train.rename(target_col)], axis=1).to_csv(
-        splits_dir / "train_raw.csv", index=False
+    root_splits_dir = Path(PROJECT_ROOT) / Path(splits_dir)
+    root_splits_dir.mkdir(parents=True, exist_ok=True)
+    pd.concat([X_train, y_train.rename(target_col)], axis=1).to_excel(
+        root_splits_dir / "train_raw.xlsx", index=False
     )
-    pd.concat([X_valid, y_valid.rename(target_col)], axis=1).to_csv(
-        splits_dir / "valid_raw.csv", index=False
+    pd.concat([X_valid, y_valid.rename(target_col)], axis=1).to_excel(
+        root_splits_dir / "valid_raw.xlsx", index=False
     )
-    pd.concat([X_test, y_test.rename(target_col)], axis=1).to_csv(
-        splits_dir / "test_raw.csv", index=False
+    pd.concat([X_test, y_test.rename(target_col)], axis=1).to_excel(
+        root_splits_dir / "test_raw.xlsx", index=False
     )
     logger.info(
         "Saved raw splits: train (%d rows), valid (%d rows), test (%d rows)",
@@ -213,10 +216,13 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     processed_dir = Path(
         config.get("artifacts", {}).get("processed_dir", "data/processed")
     )
-    processed_dir.mkdir(parents=True, exist_ok=True)
-    df_train_proc.to_csv(processed_dir / "train_processed.csv", index=False)
-    df_valid_proc.to_csv(processed_dir / "valid_processed.csv", index=False)
-    df_test_proc.to_csv(processed_dir / "test_processed.csv", index=False)
+
+    root_processed_dir = Path(PROJECT_ROOT) / Path(processed_dir)
+
+    root_processed_dir.mkdir(parents=True, exist_ok=True)
+    df_train_proc.to_excel(root_processed_dir / "train_processed.xlsx", index=False)
+    df_valid_proc.to_excel(root_processed_dir / "valid_processed.xlsx", index=False)
+    df_test_proc.to_excel(root_processed_dir / "test_processed.xlsx", index=False)
     logger.info("Saved processed splits: train, valid, test")
 
     # 3. Train model using config["model"]
@@ -242,14 +248,11 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
         "preprocessing_pipeline", "models/preprocessing_pipeline.pkl"
     )
     model_path = art_cfg.get("model_path", "models/knn_model.pkl")
-    save_artifact(preprocessor, pipeline_path)
-    save_artifact(model, model_path)
 
-    # If additional model save_path is specified under
-    # config["model"][active_model]["save_path"], use that
-    additional_save = model_cfg.get(active_model, {}).get("save_path")
-    if additional_save:
-        save_artifact(model, additional_save)
+    root_pipeline_path = Path(PROJECT_ROOT) / Path(pipeline_path)
+    root_model_path = Path(PROJECT_ROOT) / Path(model_path)
+    save_artifact(preprocessor, root_pipeline_path)
+    save_artifact(model, root_model_path)
 
     # 5. Evaluate on validation and test sets
     logger.info("Evaluating on validation set")

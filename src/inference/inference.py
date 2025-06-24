@@ -322,7 +322,8 @@ def run_inference(
 
         # 3b) Wrap back into DataFrame so model.predict
         # sees correct column names
-        X_df = pd.DataFrame(X_array, columns=required_feats)
+        transformed_feats = cfg.get("raw_features", {})
+        X_df = pd.DataFrame(X_array, columns=transformed_feats)
         preds = make_predictions(model, X_df, return_proba)
 
         # 4) Make predictions
@@ -423,7 +424,8 @@ def run_inference_df(
 
         # 3. Preprocess input
         X_array = preprocess_inference_data(raw_df, pipeline, required_feats)
-        X_df = pd.DataFrame(X_array, columns=required_feats)
+        transformed_feats = config.get("raw_features", [])
+        X_df = pd.DataFrame(X_array, columns=transformed_feats)
 
         # 4. Predict
         preds = make_predictions(model, X_df, return_proba)
