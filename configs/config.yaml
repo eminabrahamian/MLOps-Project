@@ -66,6 +66,7 @@ evaluation:
   - test
 
 inference:
+  log_artifacts: true
   input_file: ./data/raw/new_inference_data.xlsx
   output_file: ./data/inference_predictions/new_predictions.xlsx
 
