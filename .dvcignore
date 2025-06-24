@@ -1,3 +1,33 @@
-# Add patterns of files dvc should ignore, which could improve
-# the performance. Learn more at
-# https://dvc.org/doc/user-guide/dvcignore
+# Ignore git history (but keep .gitignore)
+.git
+.gitignore
+
+# Ignore DVC cache and temp files (but keep config)
+.dvc/cache/
+.dvc/tmp/
+.dvcignore
+
+# Ignore large datasets and artifacts
+artifacts/
+data/
+logs/
+wandb/
+mlruns/
+outputs/
+notebooks/
+
+# Python cache
+_pycache_/
+*.py[cod]
+
+# Environment files (sensitive data)
+.env
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage files
+.coverage
+.coveragearc
