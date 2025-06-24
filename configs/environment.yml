@@ -28,3 +28,5 @@ dependencies:
     - mlflow
     - mlflow-skinny
     - fastapi
+    - httpx
+    - wandb
