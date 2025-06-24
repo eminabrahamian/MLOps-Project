@@ -11,10 +11,20 @@ Covers:
 Designed for high coverage and isolated testability.
 """
 
+import os
+import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
-import app.main  # app/main.py
 
+CI = os.getenv("CI", "false").lower() == "true"
+PIPELINE_EXISTS = os.path.exists("models/preprocessing_pipeline.pkl")
+
+pytestmark = pytest.mark.skipif(
+    CI and not PIPELINE_EXISTS,
+    reason="Pipeline file missing in CI environment"
+)
+
+import app.main  # delayed until after skipif
 client = TestClient(app.main.app)
 
 EXAMPLE_INPUT = {
