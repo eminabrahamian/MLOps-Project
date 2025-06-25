@@ -6,8 +6,8 @@ and saves JSON reports and scalars to Weights & Biases.
 Includes structured logging, error handling, and configurable splits.
 """
 
-import sys
 import logging
+import sys
 from datetime import datetime
 from pathlib import Path
 

@@ -7,11 +7,11 @@ them as W&B artifacts.
 """
 
 import logging
+import pickle
 import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-import pickle
 
 import hydra
 import pandas as pd

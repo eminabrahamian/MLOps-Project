@@ -14,8 +14,9 @@ to ensure fast and isolated testing.
 """
 
 import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from omegaconf import OmegaConf
 
 import main  # root-level main.py

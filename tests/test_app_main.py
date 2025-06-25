@@ -12,9 +12,10 @@ Designed for high coverage and isolated testability.
 """
 
 import os
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch
 
 CI = os.getenv("CI", "false").lower() == "true"
 PIPELINE_EXISTS = os.path.exists("models/preprocessing_pipeline.pkl")

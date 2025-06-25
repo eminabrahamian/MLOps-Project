@@ -6,18 +6,18 @@ persists all artifacts (raw splits, processed splits, pipeline, model),
 evaluates performance, and logs everything to W&B.
 """
 
+import logging
 import os
 import sys
-import logging
 import tempfile
-from pathlib import Path
 from datetime import datetime
-
-import pandas as pd
-from omegaconf import DictConfig, OmegaConf
-from dotenv import load_dotenv
+from pathlib import Path
 
 import hydra
+import pandas as pd
+from dotenv import load_dotenv
+from omegaconf import DictConfig, OmegaConf
+
 import wandb
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

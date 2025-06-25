@@ -36,9 +36,9 @@ from src.inference.inference import (
     make_predictions,
     preprocess_inference_data,
     run_inference,
+    run_inference_df,
     save_predictions,
     setup_logger,
-    run_inference_df,
 )
 
 

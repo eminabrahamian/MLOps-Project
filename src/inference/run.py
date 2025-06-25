@@ -5,21 +5,22 @@ Loads a trained model and preprocessing pipeline from W&B artifacts,
 runs batch inference on input data, logs predictions and summaries back to W&B.
 """
 
-import os
-import sys
-import time
-import logging
 import hashlib
 import json
+import logging
+import os
+import sys
 import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 
 import hydra
-import wandb
 import pandas as pd
-from omegaconf import DictConfig, OmegaConf
 from dotenv import load_dotenv
+from omegaconf import DictConfig, OmegaConf
+
+import wandb
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(PROJECT_ROOT))

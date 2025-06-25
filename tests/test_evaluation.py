@@ -13,11 +13,11 @@ Covers:
   with temporary CSV/model
 """
 
+import io
 import json
 import logging
 import pickle
 from pathlib import Path
-import io
 
 import numpy as np
 import pandas as pd

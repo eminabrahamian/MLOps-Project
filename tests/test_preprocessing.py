@@ -11,11 +11,12 @@ Covers:
 """
 
 import copy
+
 import pandas as pd
 import pytest
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
 
 from src.preprocessing.preprocessing import (
     ColumnRenamer,

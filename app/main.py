@@ -1,11 +1,11 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import pandas as pd
 import pickle
-import yaml
 import sys
 from pathlib import Path
 
+import pandas as pd
+import yaml
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 # Add the root directory to sys.path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
