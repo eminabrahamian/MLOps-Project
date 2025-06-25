@@ -78,15 +78,20 @@ def main(cfg: DictConfig) -> None:
             art = run.use_artifact("new_inference_data:latest")
             with tempfile.TemporaryDirectory() as tmpdir:
                 raw_inference_data_path = art.download(root=tmpdir)
-                df = pd.read_excel(os.path.join(raw_inference_data_path, "new_inference_data.xlsx"))
+                df = pd.read_excel(os.path.join(
+                    raw_inference_data_path,
+                    "new_inference_data.xlsx"))
                 if df.empty:
-                    logger.warning("Loaded DataFrame is empty; skipping validation")
+                    logger.warning(
+                        "Loaded DataFrame is empty; skipping validation")
                 if df.duplicated().sum() > 0:
                     logger.warning(
-                        "DataFrame contains duplicates; consider deduplication"
+                        "DataFrame contains duplicates;"
+                        " consider deduplication"
                     )
-                logger.info("Downloaded inference data: %s", raw_inference_data_path)
-        
+                logger.info("Downloaded inference data: %s",
+                            raw_inference_data_path)
+
         except Exception:
             logger.warning(
                 "Could not fetch artifact '%s'; using %s",
@@ -136,20 +141,21 @@ def main(cfg: DictConfig) -> None:
             wandb.log({"predictions_table": wandb.Table(dataframe=df_out)})
             wandb.summary["n_predictions"] = len(df_out)
             wandb.summary["prediction_columns"] = list(df_out.columns)
-            
+
             if "prediction_proba" in df_out.columns:
                 probs = df_out["prediction_proba"]
                 wandb.summary["proba_mean"] = float(probs.mean())
                 wandb.summary["proba_min"] = float(probs.min())
                 wandb.summary["proba_max"] = float(probs.max())
-            
+
             # persist as artifact
             pred_art = wandb.Artifact("predictions", type="predictions")
             pred_art.add_file(str(output_path))
             run.log_artifact(pred_art, aliases=["latest"])
             logger.info("Logged predictions to W&B")
 
-        logger.info("Checking if input artifact logging is enabled: %s", cfg.inference.get("log_artifacts", True))
+        logger.info("Checking if input artifact logging is enabled: %s",
+                    cfg.inference.get("log_artifacts", True))
 
         if cfg.inference.get("log_artifacts", True):
             logger.info("Artifact logging is enabled")

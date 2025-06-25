@@ -220,9 +220,12 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     root_processed_dir = Path(PROJECT_ROOT) / Path(processed_dir)
 
     root_processed_dir.mkdir(parents=True, exist_ok=True)
-    df_train_proc.to_excel(root_processed_dir / "train_processed.xlsx", index=False)
-    df_valid_proc.to_excel(root_processed_dir / "valid_processed.xlsx", index=False)
-    df_test_proc.to_excel(root_processed_dir / "test_processed.xlsx", index=False)
+    df_train_proc.to_excel(root_processed_dir / "train_processed.xlsx",
+                           index=False)
+    df_valid_proc.to_excel(root_processed_dir / "valid_processed.xlsx",
+                           index=False)
+    df_test_proc.to_excel(root_processed_dir / "test_processed.xlsx",
+                          index=False)
     logger.info("Saved processed splits: train, valid, test")
 
     # 3. Train model using config["model"]

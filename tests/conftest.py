@@ -1,5 +1,6 @@
 import os
 
+
 def pytest_ignore_collect(path, config):
     # Skip this test during CI only
     return (

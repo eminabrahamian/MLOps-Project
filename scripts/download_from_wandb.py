@@ -27,7 +27,10 @@ def download_artifacts(dest_dir: str | Path = "models") -> None:
         )
 
     wandb.login(key=api_key)
-    run = wandb.init(project=project, entity=entity, job_type="fetch-model", reinit=True)
+    run = wandb.init(project=project,
+                     entity=entity,
+                     job_type="fetch-model",
+                     reinit=True)
 
     model_art = run.use_artifact("model:latest")
     model_dir = Path(model_art.download())
