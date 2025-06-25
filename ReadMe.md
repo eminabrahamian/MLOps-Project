@@ -163,6 +163,7 @@ Each of these components is tested with `pytest`, tracked with Weights & Biases,
 ```bash
 conda env create -f configs/environment.yml
 conda activate mlops_project
+chmod +x setup.sh     # Make setup.sh executable (only once per system)
 ./setup.sh            # Installs Python dependencies and sets PYTHONPATH
 dvc pull              # Pull tracked data and models
 wandb login           # Authenticate with Weights & Biases
