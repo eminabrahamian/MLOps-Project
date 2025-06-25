@@ -161,7 +161,7 @@ Each of these components is tested with `pytest`, tracked with Weights & Biases,
 
 **📦 Environment setup**
 ```bash
-conda env create -f environment.yml
+conda env create -f configs/environment.yml
 conda activate mlops_project
 ./setup.sh            # Installs Python dependencies and sets PYTHONPATH
 dvc pull              # Pull tracked data and models
