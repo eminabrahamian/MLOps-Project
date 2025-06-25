@@ -332,4 +332,23 @@ def generate_split_report(
         log_results=True,
         save_path=str(save_file),
     )
+
+    # Also compute y_pred and y_proba to enable visual logging
+    try:
+        y_pred = model.predict(X)
+        if hasattr(model, "predict_proba"):
+            y_proba = model.predict_proba(X)[:, 1]
+        else:
+            y_proba = None
+    except Exception as e:
+        logger.warning("Could not compute predictions: %s", e)
+        y_pred = None
+        y_proba = None
+
+    # Append them to the metrics dictionary for plotting
+    metrics["y_true"] = y.tolist() if isinstance(y, np.ndarray) else y
+    metrics["y_pred"] = y_pred.tolist() if y_pred is not None else None
+    metrics["y_proba"] = y_proba.tolist() if y_proba is not None else None
+
     return metrics
+

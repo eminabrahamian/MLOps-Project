@@ -1,7 +1,7 @@
 {
   "Confusion Matrix": {
-    "tn": 113,
-    "fp": 14,
+    "tn": 110,
+    "fp": 17,
     "fn": 7,
     "tp": 207
   }

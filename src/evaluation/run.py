@@ -81,6 +81,30 @@ def main(cfg: DictConfig) -> None:
                 model_path=cfg.artifacts.model_path,
                 save_path=str(metrics_dir),
             )
+            if split == "test":
+                # --- Extra Visualizations if y_true, y_pred, y_proba are in report ---
+                y_true = report.get("y_true", None)
+                y_pred = report.get("y_pred", None)
+                y_proba = report.get("y_proba", None)
+
+                if y_true is not None and y_pred is not None and len(y_true) == len(y_pred):
+                    wandb.log({
+                        f"{split}_confusion_matrix": wandb.plot.confusion_matrix(
+                            y_true=y_true,
+                            preds=y_pred,
+                            class_names=cfg.get("dataset", {}).get("class_names", ["Benign", "Malignant"]),
+                        )
+                    })
+
+                if y_true is not None and y_proba is not None and len(y_true) == len(y_proba):
+                    import numpy as np
+                    y_proba_arr = np.asarray(y_proba)
+                    if y_proba_arr.ndim == 1:  # binary case
+                        y_proba_arr = np.column_stack([1 - y_proba_arr, y_proba_arr])
+                    wandb.log({
+                        f"{split}_roc_curve": wandb.plot.roc_curve(y_true, y_proba_arr),
+                        f"{split}_pr_curve":  wandb.plot.pr_curve(y_true, y_proba_arr),
+                    })
 
             # 6a) Log the JSON file as a W&B artifact
             json_path = metrics_dir / f"{split}_metrics.json"
