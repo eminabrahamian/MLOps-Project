@@ -87,6 +87,10 @@ def main(cfg: DictConfig) -> None:
             if json_path.is_file():
                 wandb.save(str(json_path))
                 logger.info("Saved split report to %s", json_path)
+
+                artifact = wandb.Artifact(f"{split}_metrics.json", type=f'split_report_{split}')
+                artifact.add_file(str(json_path), name=f"{split}_metrics.json")
+                wandb_run.log_artifact(artifact, aliases=['latest'])
             else:
                 logger.warning("Expected metrics file not found: %s", json_path)
 

@@ -9,7 +9,6 @@
 
 # Ignore large datasets and artifacts
 artifacts/
-data/
 logs/
 wandb/
 mlruns/
