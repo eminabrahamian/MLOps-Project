@@ -245,8 +245,8 @@ See `render.yaml` for a minimal, production-ready deployment configuration.
 
 ## 9. Academic Notes
 
-- Demonstrates best practices in modularity, testing, and reproducibility.
-- All logic is config-driven for easy extension and experimentation.
+- Demonstrates best practices in modularity, testing, and reproducibility using MLFlow and W&B.
+- All logic is config-driven and hydra-managed for easy extension and experimentation.
 - Suitable for both teaching and real-world MLOps scenarios.
 
 ---
