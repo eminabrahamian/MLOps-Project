@@ -167,18 +167,21 @@ chmod +x setup.sh     # Make setup.sh executable (only once per system)
 ./setup.sh            # Installs Python dependencies and sets PYTHONPATH
 dvc pull              # Pull tracked data and models
 wandb login           # Authenticate with Weights & Biases
-cp .env.example .env  # Create local environment file
+cp .env .env          # Create local environment file
 # Then edit `.env` to include:
 # WANDB_PROJECT=<your-project-name>
 # WANDB_ENTITY=<your-wandb-entity>
+# AWS_ACCESS_KEY_ID=<your_aws_access_key_id>
+# AWS_SECRET_ACCESS_KEY=<your_aws_secret_access_key>
+# AWS_DEFAULT_REGION=<your_aws_default_region>
+
+# Load .env into shell (if not using python-dotenv)
+export $(cat .env | xargs)
 ```
 
 **▶️ Run the full pipeline**
 ```bash
-# Option 1: using the main orchestrator with Hydra
-python main.py main.steps=all
-
-# Option 2: using MLflow (configured via MLproject)
+Using MLflow (configured via MLproject)
 mlflow run . -P steps=all
 
 # Override model hyperparameters (e.g., n_neighbors)
@@ -186,7 +189,7 @@ python main.py main.steps=model main.hydra_options="model.knn.params.n_neighbors
 mlflow run . -P steps=model -P hydra_options="model.knn.params.n_neighbors=3"
 ```
 
-> `main.steps` can be any subset of: `data_loader,data_validator,preprocessing,model,evaluation,inference`
+> `steps` can be any subset of: `data_loader,data_validator,preprocessing,model,evaluation,inference`
 
 **🧪 Run tests**
 ```bash
