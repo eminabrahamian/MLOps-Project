@@ -215,14 +215,7 @@ python -m src.inference.inference \
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-**📬 Call the running API (batch)**
-```bash
-python scripts/call_api.py \
-  --url http://localhost:8000/predict_batch \
-  --input data/inference/new_data.xlsx
-```
-
-> The `/predict` endpoint supports single-record requests. See the Swagger UI at `http://localhost:8000/docs`.
+> See the Swagger UI at `http://localhost:8000/docs`.
 
 ---
 
