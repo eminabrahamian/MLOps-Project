@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/2025-IE-MLOps-course/mlops_project-CICD/actions/workflows/ci.yml/badge.svg)](https://github.com/2025-IE-MLOps-course/mlops_project-CICD/actions/workflows/ci.yml)
 
-This repository implements a robust, modular MLOps pipeline for binary classification of breast cancer using the Wisconsin dataset. Designed for both academic and practical use, the project demonstrates best practices in reproducibility, configuration-driven workflows, and production-ready deployment.
+This repository implements a robust, modular MLOps pipeline for binary classification of breast cancer using the Wisconsin Health Labs dataset. Designed for both academic and practical use, the project demonstrates MLOps best practices in reproducibility, configuration-driven workflows, and production-ready deployment.
 
 ---
 
