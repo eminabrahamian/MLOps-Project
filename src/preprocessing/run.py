@@ -90,9 +90,7 @@ def main(cfg: DictConfig) -> None:
         cfg_dict = OmegaConf.to_container(cfg, resolve=True)
         pipeline = build_preprocessing_pipeline(cfg_dict)
         X = pipeline.fit_transform(df)
-        cols = get_output_feature_names(
-            pipeline, df.columns.tolist(), cfg_dict
-        )
+        cols = get_output_feature_names(pipeline, df.columns.tolist(), cfg_dict)
         df_proc = pd.DataFrame(X, columns=cols)
         df_proc[cfg.target] = df[cfg.target]
 
@@ -146,9 +144,7 @@ def main(cfg: DictConfig) -> None:
         logger.info("Saved preprocessing pipeline to %s", pp_path)
 
         if cfg.preprocessing.log_pipeline:
-            artifact = wandb.Artifact(
-                "preprocessing_pipeline", type="pipeline"
-            )
+            artifact = wandb.Artifact("preprocessing_pipeline", type="pipeline")
             artifact.add_file(str(pp_path))
             run.log_artifact(artifact, aliases=["latest"])
             logger.info("Logged preprocessing pipeline artifact to WandB")

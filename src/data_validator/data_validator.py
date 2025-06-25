@@ -31,9 +31,7 @@ def load_config(config_path: Path = None) -> Dict[str, Any]:
         avoiding hard‐coded values in code and easing reproducibility.
     """
     if config_path is None:
-        config_path = (
-            Path(__file__).resolve().parents[2] / "configs" / "config.yaml"
-        )
+        config_path = Path(__file__).resolve().parents[2] / "configs" / "config.yaml"
 
     if not config_path.is_file():
         raise DataValidationError("Config file not found: %s" % config_path)
@@ -54,13 +52,9 @@ def setup_logger(cfg: Dict[str, Any]) -> logging.Logger:
         and that logs are captured to both file and console.
     """
     log_cfg = cfg.get("logging", {})
-    level = getattr(
-        logging, log_cfg.get("level", "INFO").upper(), logging.INFO
-    )
+    level = getattr(logging, log_cfg.get("level", "INFO").upper(), logging.INFO)
     log_file = log_cfg.get("log_file", "logs/validation.log")
-    fmt = log_cfg.get(
-        "format", "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    )
+    fmt = log_cfg.get("format", "%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     datefmt = log_cfg.get("datefmt", None)
 
     # Ensure log directory exists
@@ -141,9 +135,7 @@ def _validate_column(
             expected,
         )
         errors.append(msg)
-        col_report.update(
-            dtype=str(series.dtype), expected_dtype=expected, error=msg
-        )
+        col_report.update(dtype=str(series.dtype), expected_dtype=expected, error=msg)
         report[name] = col_report
         return  # stop further checks
 
@@ -219,8 +211,7 @@ def validate_data(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     columns = cfg.get("schema", {}).get("columns", [])
     if not columns:
         logging.getLogger(__name__).warning(
-            "No columns defined under data_validation.schema.columns; "
-            "skipping."
+            "No columns defined under data_validation.schema.columns; " "skipping."
         )
         return
 
@@ -250,9 +241,7 @@ def validate_data(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     # log results
     logger = logging.getLogger(__name__)
     if errors:
-        logger.error(
-            "Validation failed: %d errors (see %s)", len(errors), report_path
-        )
+        logger.error("Validation failed: %d errors (see %s)", len(errors), report_path)
         for e in errors:
             logger.error(e)
     if warnings:
@@ -264,9 +253,7 @@ def validate_data(df: pd.DataFrame, config: Dict[str, Any]) -> None:
 
     # enforce action
     if errors and action == "raise":
-        raise DataValidationError(
-            "Data validation failed; see %s" % report_path
-        )
+        raise DataValidationError("Data validation failed; see %s" % report_path)
 
 
 def main() -> None:
@@ -279,10 +266,7 @@ def main() -> None:
         Enables quick ad-hoc validation without writing custom scripts.
     """
     if len(sys.argv) != 3:
-        print(
-            "Usage: python -m src.data.data_validator "
-            "<data.xlsx> <config.yaml>"
-        )
+        print("Usage: python -m src.data.data_validator " "<data.xlsx> <config.yaml>")
         sys.exit(1)
 
     data_path, cfg_path = sys.argv[1], sys.argv[2]

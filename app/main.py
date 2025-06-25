@@ -104,7 +104,7 @@ class BreastCancerInput(BaseModel):
                 "worst_concavity": 0.7119,
                 "worst_concave_points": 0.2654,
                 "worst_symmetry": 0.4601,
-                "worst_fractal_dimension": 0.1189
+                "worst_fractal_dimension": 0.1189,
             }
         }
 
@@ -160,13 +160,15 @@ def predict(payload: BreastCancerInput):
         # Step 3: Return results
         result = {
             "prediction": int(preds[0]),
-            "probability": float(proba[0]) if proba[0] is not None else None
+            "probability": float(proba[0]) if proba[0] is not None else None,
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    return {"prediction": int(result["prediction"]),
-            "probability": float(result["probability"])}
+    return {
+        "prediction": int(result["prediction"]),
+        "probability": float(result["probability"]),
+    }
 
 
 @app.post("/predict_batch")
@@ -193,8 +195,10 @@ def predict_batch(payloads: list[BreastCancerInput]):
             proba = [None] * len(df)
 
         return [
-            {"prediction": int(p), "probability": float(prob)
-             if prob is not None else None}
+            {
+                "prediction": int(p),
+                "probability": float(prob) if prob is not None else None,
+            }
             for p, prob in zip(preds, proba)
         ]
     except Exception as e:

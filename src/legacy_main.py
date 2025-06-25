@@ -61,9 +61,7 @@ def _setup_logging(log_cfg: Dict[str, str]) -> None:
     level_name = log_cfg.get("level", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
     log_file = log_cfg.get("log_file", "logs/main.log")
-    fmt = log_cfg.get(
-        "format", "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    )
+    fmt = log_cfg.get("format", "%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     datefmt = log_cfg.get("datefmt", "%Y-%m-%d %H:%M:%S")
 
     # Ensure parent directory for log_file exists
@@ -171,9 +169,7 @@ def main() -> None:
         # ── Inference Stage ──────────────────────────────────────────────
         if args.stage == "infer":
             if not args.input_csv or not args.output_csv:
-                logger.error(
-                    "Inference stage requires --input_csv and --output_csv"
-                )
+                logger.error("Inference stage requires --input_csv and --output_csv")
                 sys.exit(1)
 
             try:
@@ -193,13 +189,9 @@ def main() -> None:
                 input_path=args.input_csv,
                 config_path=args.config,
                 output_path=args.output_csv,
-                return_proba=config.get("inference", {}).get(
-                    "return_proba", False
-                ),
+                return_proba=config.get("inference", {}).get("return_proba", False),
             )
-            logger.info(
-                "Batch inference completed | output=%s", args.output_csv
-            )
+            logger.info("Batch inference completed | output=%s", args.output_csv)
 
     except Exception as exc:
         logger.exception("Pipeline failed: %s", exc)

@@ -5,6 +5,7 @@ Loads the validated dataset artifact, applies each configured transformer
 from FEATURE_TRANSFORMERS, saves the engineered XLSX, and logs artifacts
 and summary metrics back to W&B.
 """
+
 import sys
 import logging
 from datetime import datetime
@@ -33,8 +34,9 @@ logging.basicConfig(
 logger = logging.getLogger("features")
 
 
-@hydra.main(config_path=str(PROJECT_ROOT / "configs"),
-            config_name="config", version_base=None)
+@hydra.main(
+    config_path=str(PROJECT_ROOT / "configs"), config_name="config", version_base=None
+)
 def main(cfg: DictConfig) -> None:
     """
     Entry point for feature engineering.
@@ -70,10 +72,12 @@ def main(cfg: DictConfig) -> None:
             art_dir = Path(val_art.download(root=tmp_dir))
             excels = list(art_dir.glob("*.xlsx"))
             if not excels:
-                logger.error("No Excel file (.xlsx) found"
-                             " in validated_data artifact")
-                run.alert(title="Feature Eng Error",
-                          text="Missing validated_data Excel file")
+                logger.error(
+                    "No Excel file (.xlsx) found" " in validated_data artifact"
+                )
+                run.alert(
+                    title="Feature Eng Error", text="Missing validated_data Excel file"
+                )
                 sys.exit(1)
             df = pd.read_excel(excels[0])
         if df.empty:
@@ -83,8 +87,9 @@ def main(cfg: DictConfig) -> None:
         applied = []
         params = {}
         if not cfg.features.get("enabled", True):
-            logger.info("Feature engineering is disabled."
-                        " Skipping all transformers.")
+            logger.info(
+                "Feature engineering is disabled." " Skipping all transformers."
+            )
         else:
             for feat in cfg.features.get("engineered", []):
                 builder = FEATURE_TRANSFORMERS.get(feat)
@@ -112,12 +117,14 @@ def main(cfg: DictConfig) -> None:
             logger.info("Logged engineered data artifact")
 
         # 5) Summary metrics
-        wandb.summary.update({
-            "n_rows": df.shape[0],
-            "n_cols": df.shape[1],
-            "applied_features": applied,
-            "feature_params": params,
-        })
+        wandb.summary.update(
+            {
+                "n_rows": df.shape[0],
+                "n_cols": df.shape[1],
+                "applied_features": applied,
+                "feature_params": params,
+            }
+        )
 
     except Exception as e:
         logger.exception("Feature engineering failed: %s", e)

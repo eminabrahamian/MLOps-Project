@@ -66,9 +66,7 @@ def setup_logger(cfg: dict) -> logging.Logger:
     # ensure the logs/ folder exists
     log_file.parent.mkdir(parents=True, exist_ok=True)
 
-    fmt = cfg.get(
-        "format", "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    )
+    fmt = cfg.get("format", "%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     datefmt = cfg.get("datefmt", None)
 
     # reset any existing handlers

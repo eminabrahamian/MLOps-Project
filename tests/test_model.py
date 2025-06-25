@@ -30,11 +30,13 @@ from src.model.model import (
 @pytest.fixture
 def minimal_train_config(tmp_path):
     # Balanced dataset (4 per class) to support stratified splitting
-    data = pd.DataFrame({
-        "x1": list(range(1, 13)),
-        "x2": list(range(12, 0, -1)),
-        "target": [0, 1] * 6  # 6 zeros, 6 ones
-    })
+    data = pd.DataFrame(
+        {
+            "x1": list(range(1, 13)),
+            "x2": list(range(12, 0, -1)),
+            "target": [0, 1] * 6,  # 6 zeros, 6 ones
+        }
+    )
 
     cfg = {
         "raw_features": ["x1", "x2"],
@@ -135,10 +137,10 @@ def test_run_model_pipeline_end_to_end(minimal_train_config):
 
     # Assert processed data exists
     for split in ["train", "valid", "test"]:
-        assert (Path(cfg["artifacts"]["processed_dir"]) /
-                f"{split}_processed.xlsx").exists()
-        assert (Path(cfg["artifacts"]["splits_dir"]) /
-                f"{split}_raw.xlsx").exists()
+        assert (
+            Path(cfg["artifacts"]["processed_dir"]) / f"{split}_processed.xlsx"
+        ).exists()
+        assert (Path(cfg["artifacts"]["splits_dir"]) / f"{split}_raw.xlsx").exists()
 
 
 def test_run_model_pipeline_invalid_model(minimal_train_config):
@@ -155,15 +157,12 @@ def test_run_model_pipeline_missing_target(minimal_train_config):
         run_model_pipeline(df, cfg)
 
 
-def test_run_model_pipeline_with_model_override(monkeypatch,
-                                                minimal_train_config):
+def test_run_model_pipeline_with_model_override(monkeypatch, minimal_train_config):
     df, cfg = minimal_train_config
 
     # Provide model-specific params at incorrect level
     cfg["model"]["model"] = {
-        "params": {"n_neighbors": 1,
-                   "weights": "uniform",
-                   "metric": "minkowski"}
+        "params": {"n_neighbors": 1, "weights": "uniform", "metric": "minkowski"}
     }
 
     run_model_pipeline(df, cfg)

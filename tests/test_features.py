@@ -88,9 +88,7 @@ def test_datetimefeatures_and_cyclic():
     DateTimeFeatures should extract day_of_week, month,
     hour, hour_sin, hour_cos.
     """
-    df = pd.DataFrame(
-        {"date": ["2021-01-01 00:00:00", "2021-12-31 23:00:00", None]}
-    )
+    df = pd.DataFrame({"date": ["2021-01-01 00:00:00", "2021-12-31 23:00:00", None]})
     transf = DateTimeFeatures("date")
     out = transf.transform(df)
     # Check presence of all expected columns

@@ -12,6 +12,7 @@ from pathlib import Path
 
 class DummyArtifact:
     """Mock class to simulate .download() from a W&B or MLflow artifact."""
+
     def __init__(self, path: Path):
         self.path = Path(path)
 
@@ -41,5 +42,4 @@ def test_artifact_download_structure(tmp_path):
 
     # Optional: confirm contents
     assert (download_path / "model.pkl").read_text() == "fake-model"
-    assert (download_path /
-            "preprocessing_pipeline.pkl").read_text() == "fake-pipeline"
+    assert (download_path / "preprocessing_pipeline.pkl").read_text() == "fake-pipeline"

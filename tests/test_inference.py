@@ -100,7 +100,7 @@ def temp_inference_artifacts(tmp_path):
             "model_path": str(model_file),
         },
         "original_features": ["f1", "f2"],  # FIXED: added for correct shape
-        "raw_features": ["f1", "f2"]
+        "raw_features": ["f1", "f2"],
     }
     cfg_file = tmp_path / "config_inf.yaml"
     with cfg_file.open("w", encoding="utf-8") as f:
@@ -278,9 +278,7 @@ def test_save_predictions_with_probs(tmp_path):
     assert out_file.is_file()
     df = pd.read_excel(out_file, index_col=0)
     # Columns: class_0, class_1, prediction
-    assert all(
-        col in df.columns for col in ["class_0", "class_1", "prediction"]
-    )
+    assert all(col in df.columns for col in ["class_0", "class_1", "prediction"])
     assert df["prediction"].tolist() == [1, 0]
 
 
@@ -302,9 +300,7 @@ def test_run_inference_happy_path(tmp_path, temp_inference_artifacts):
     assert "prediction" in df_out.columns
 
 
-def test_run_inference_missing_pipeline_key(
-    tmp_path, temp_inference_artifacts
-):
+def test_run_inference_missing_pipeline_key(tmp_path, temp_inference_artifacts):
     """
     run_inference should exit/raise if config missing
     'artifacts.preprocessing_pipeline'.
@@ -327,8 +323,7 @@ def test_run_inference_missing_pipeline_key(
         )
 
 
-def test_run_inference_invalid_feature_names(tmp_path,
-                                             temp_inference_artifacts):
+def test_run_inference_invalid_feature_names(tmp_path, temp_inference_artifacts):
     """
     Should trigger feature mismatch and sys.exit(1)
     """
@@ -347,7 +342,7 @@ def test_run_inference_invalid_feature_names(tmp_path,
             str(in_csv),
             str(cfg_file),
             str(tmp_path / "fail_preds.xlsx"),
-            return_proba=False
+            return_proba=False,
         )
 
 
@@ -384,8 +379,7 @@ def test_run_inference_df_model_failure(temp_inference_artifacts, monkeypatch):
         def predict(self, X):
             raise RuntimeError("intentional failure")
 
-    monkeypatch.setattr("src.inference.inference.load_model",
-                        lambda _: BadModel())
+    monkeypatch.setattr("src.inference.inference.load_model", lambda _: BadModel())
 
     df = pd.DataFrame({"f1": [1.0], "f2": [2.0]})
     with pytest.raises(InferenceError, match="intentional failure"):
@@ -393,7 +387,8 @@ def test_run_inference_df_model_failure(temp_inference_artifacts, monkeypatch):
 
 
 def test_run_inference_df_pipeline_missing_feature(
-        monkeypatch, temp_inference_artifacts):
+    monkeypatch, temp_inference_artifacts
+):
     """
     Test if error raised when pipeline transform fails due to shape mismatch.
     """
@@ -403,8 +398,9 @@ def test_run_inference_df_pipeline_missing_feature(
         def transform(self, X):
             raise ValueError("bad input shape")
 
-    monkeypatch.setattr("src.inference.inference.load_pipeline",
-                        lambda _: BadPipeline())
+    monkeypatch.setattr(
+        "src.inference.inference.load_pipeline", lambda _: BadPipeline()
+    )
 
     df = pd.DataFrame({"f1": [1.0], "f2": [2.0]})
     with pytest.raises(ValueError, match="bad input shape"):

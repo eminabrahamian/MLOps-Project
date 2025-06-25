@@ -37,7 +37,7 @@ def config_and_schema(tmp_path):
         "logging": {
             "level": "DEBUG",
             "log_file": str(tmp_path / "val.log"),
-            "format": "%(levelname)s:%(message)s"
+            "format": "%(levelname)s:%(message)s",
         },
         "data_validation": {
             "enabled": True,
@@ -45,14 +45,23 @@ def config_and_schema(tmp_path):
             "report_path": str(tmp_path / "report.json"),
             "schema": {
                 "columns": [
-                    {"name": "id", "dtype": "int",
-                     "required": True, "min": 0, "max": 10},
-                    {"name": "cat", "dtype": "int",
-                     "required": False, "allowed_values": [0, 1]},
+                    {
+                        "name": "id",
+                        "dtype": "int",
+                        "required": True,
+                        "min": 0,
+                        "max": 10,
+                    },
+                    {
+                        "name": "cat",
+                        "dtype": "int",
+                        "required": False,
+                        "allowed_values": [0, 1],
+                    },
                     {"name": "opt", "dtype": "float", "required": False},
                 ]
-            }
-        }
+            },
+        },
     }
     cfg_file = tmp_path / "config.yaml"
     with open(cfg_file, "w") as f:
@@ -92,11 +101,13 @@ def test_validate_column_all_checks(config_and_schema):
     _, config = config_and_schema
     errors, warnings, report = [], [], {}
 
-    df = pd.DataFrame({
-        "id": [-5, 5, 15],        # violates min/max
-        "cat": [2, 0, 1],         # one invalid value
-        # omit 'opt' entirely to hit optional-not-present
-    })
+    df = pd.DataFrame(
+        {
+            "id": [-5, 5, 15],  # violates min/max
+            "cat": [2, 0, 1],  # one invalid value
+            # omit 'opt' entirely to hit optional-not-present
+        }
+    )
 
     for col in config["data_validation"]["schema"]["columns"]:
         _validate_column(df, col, errors, warnings, report)
@@ -112,10 +123,12 @@ def test_validate_column_sample_fallback(config_and_schema, monkeypatch):
     df = pd.DataFrame({"id": [1]})
     errors, warnings, report = [], [], {}
     series = df["id"]
-    monkeypatch.setattr(series, "dropna",
-                        lambda: (_ for _ in ()).throw(ValueError("fail")))
-    _validate_column(df, config["data_validation"]["schema"]["columns"][0],
-                     errors, warnings, report)
+    monkeypatch.setattr(
+        series, "dropna", lambda: (_ for _ in ()).throw(ValueError("fail"))
+    )
+    _validate_column(
+        df, config["data_validation"]["schema"]["columns"][0], errors, warnings, report
+    )
     assert report["id"]["samples"] == []
 
 
@@ -155,24 +168,17 @@ def test_main_usage_error():
         ["coverage", "run", "-m", "src.data_validator.data_validator"],
         capture_output=True,
         text=True,
-        env={
-            **os.environ,
-            "PYTHONPATH": str(Path.cwd())
-        },
+        env={**os.environ, "PYTHONPATH": str(Path.cwd())},
     )
     assert "Usage: python -m src.data.data_validator" in result.stdout
 
 
 def test_main_sys_exit_on_bad_args():
     result = subprocess.run(
-        ["coverage", "run", "-m",
-         "src.data_validator.data_validator", "only-one.xlsx"],
+        ["coverage", "run", "-m", "src.data_validator.data_validator", "only-one.xlsx"],
         capture_output=True,
         text=True,
-        env={
-            **os.environ,
-            "PYTHONPATH": str(Path.cwd())
-        },
+        env={**os.environ, "PYTHONPATH": str(Path.cwd())},
     )
     assert result.returncode == 1
 
@@ -190,14 +196,11 @@ def test_main_valid_run(tmp_path, config_and_schema):
             "-m",
             "src.data_validator.data_validator",
             str(data_file),
-            str(cfg_file)
+            str(cfg_file),
         ],
         capture_output=True,
         text=True,
-        env={
-            **os.environ,
-            "PYTHONPATH": str(Path.cwd())
-        },
+        env={**os.environ, "PYTHONPATH": str(Path.cwd())},
     )
 
     assert result.returncode == 0
@@ -209,19 +212,20 @@ def test_main_valid_run(tmp_path, config_and_schema):
 
 def test_main_executes_directly(tmp_path, config_and_schema, monkeypatch):
     from src.data_validator.data_validator import main
+
     cfg_file, config = config_and_schema
     df = pd.DataFrame({"id": [5], "cat": [1], "opt": [3.1]})
     data_file = tmp_path / "data.xlsx"
     df.to_excel(data_file, index=False)
 
-    monkeypatch.setattr(sys, "argv", ["script.py",
-                                      str(data_file), str(cfg_file)])
+    monkeypatch.setattr(sys, "argv", ["script.py", str(data_file), str(cfg_file)])
 
     main()  # should complete without error
 
 
 def test_main_argv_length_check(monkeypatch):
     from src.data_validator.data_validator import main
+
     monkeypatch.setattr(sys, "argv", ["script.py"])  # too few args
     with pytest.raises(SystemExit) as excinfo:
         main()

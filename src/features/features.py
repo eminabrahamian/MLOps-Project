@@ -38,9 +38,9 @@ class RiskScore(BaseEstimator, TransformerMixin):
             if col not in X:
                 X[col] = 0
         # Coerce to numeric and sum
-        flags = pd.to_numeric(
-            X[self.icd10_flags].stack(), errors="coerce"
-        ).unstack(fill_value=0)
+        flags = pd.to_numeric(X[self.icd10_flags].stack(), errors="coerce").unstack(
+            fill_value=0
+        )
         X["risk_score"] = flags.sum(axis=1)
         return X
 
@@ -77,9 +77,7 @@ class BMITransformer(BaseEstimator, TransformerMixin):
         h_m = X[self.height_col] / 100.0
         X["bmi"] = X[self.weight_col] / (h_m**2)
         if self.drop:
-            X = X.drop(
-                columns=[self.weight_col, self.height_col], errors="ignore"
-            )
+            X = X.drop(columns=[self.weight_col, self.height_col], errors="ignore")
         return X
 
 
@@ -106,7 +104,7 @@ class InteractionFeatures(BaseEstimator, TransformerMixin):
         self.pairs_ = [
             (i, j)
             for idx, i in enumerate(self.columns)
-            for j in self.columns[idx + 1:]
+            for j in self.columns[idx + 1 :]
         ]
         return self
 
@@ -197,9 +195,7 @@ class DateTimeFeatures(BaseEstimator, TransformerMixin):
 FEATURE_TRANSFORMERS = {
     "risk_score": lambda cfg: RiskScore(cfg["icd10_chapter_flags"]),
     "bmi": lambda cfg: BMITransformer(cfg["weight_col"], cfg["height_col"]),
-    "interactions": lambda cfg: InteractionFeatures(
-        cfg["interaction_columns"]
-    ),
+    "interactions": lambda cfg: InteractionFeatures(cfg["interaction_columns"]),
     "outlier_flags": lambda cfg: OutlierFlagger(
         cfg["outlier_columns"], cfg.get("z_threshold", 3.0)
     ),

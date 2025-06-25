@@ -146,8 +146,7 @@ def test_evaluate_classification_basic(basic_config, tmp_path, caplog):
     assert save_file.is_file()
     data = json.loads(save_file.read_text())
     assert "Accuracy" in data
-    assert any("Metrics [validation]" in rec.getMessage()
-               for rec in caplog.records)
+    assert any("Metrics [validation]" in rec.getMessage() for rec in caplog.records)
 
 
 def test_generate_split_report_no_files(tmp_path, basic_config):
@@ -169,6 +168,7 @@ def test_generate_split_report_success(tmp_path, basic_config):
 
 # ---------- NEW TESTS TO INCREASE COVERAGE ----------
 
+
 def test_roc_auc_missing_predict_proba(basic_config):
     model = NoProbaClassifier()
     X = np.array([[0], [1], [2]])
@@ -182,8 +182,9 @@ def test_confusion_matrix_one_class_only(basic_config):
     model = DummyBinaryClassifier()
     X = np.array([[0], [0], [0]])
     y = np.array([0, 0, 0])  # only negatives
-    result = evaluate_classification(model, X, y, basic_config,
-                                     metrics=["confusion matrix"])
+    result = evaluate_classification(
+        model, X, y, basic_config, metrics=["confusion matrix"]
+    )
     cm = result["Confusion Matrix"]
     assert cm["fp"] == 0 and cm["fn"] == 0 and cm["tp"] == 0
 
@@ -200,14 +201,12 @@ def test_save_path_exception(monkeypatch, basic_config):
     monkeypatch.setattr("pathlib.Path.mkdir", bad_mkdir)
 
     with pytest.raises(OSError):
-        evaluate_classification(model, X, y, basic_config,
-                                save_path=str(bad_path))
+        evaluate_classification(model, X, y, basic_config, save_path=str(bad_path))
 
 
 def test_generate_split_report_missing_target(tmp_path, basic_config):
     cfg = basic_config
-    file = (Path(cfg["artifacts"]["processed_dir"]) /
-            "validation_processed.xlsx")
+    file = Path(cfg["artifacts"]["processed_dir"]) / "validation_processed.xlsx"
     pd.DataFrame({"feat1": [0, 1, 0]}).to_excel(file, index=False)
     result = generate_split_report(cfg, split="validation")
     assert result == {}
@@ -225,8 +224,9 @@ def test_confusion_matrix_single_class_skips_conf_matrix(basic_config):
     model = DummyBinaryClassifier()
     X = np.array([[0], [1], [2]])
     y = np.array([1, 1, 1])  # only one class present
-    result = evaluate_classification(model, X, y, basic_config,
-                                     metrics=["confusion matrix"])
+    result = evaluate_classification(
+        model, X, y, basic_config, metrics=["confusion matrix"]
+    )
     assert result["Confusion Matrix"] == {"tn": 0, "fp": 0, "fn": 3, "tp": 0}
 
 
@@ -251,8 +251,7 @@ def test_round_dict_values_complex_structure():
     assert rounded["b"]["e"]["g"]["h"] == 0.333
 
 
-def test_evaluate_classification_save_path_failure(
-        tmp_path, basic_config, monkeypatch):
+def test_evaluate_classification_save_path_failure(tmp_path, basic_config, monkeypatch):
     model = DummyBinaryClassifier()
     X = np.array([[0], [1]])
     y = np.array([0, 1])
@@ -264,23 +263,17 @@ def test_evaluate_classification_save_path_failure(
 
     monkeypatch.setattr("builtins.open", lambda *a, **kw: fail_open())
 
-    result = evaluate_classification(model, X, y, basic_config,
-                                     save_path=str(save_file))
+    result = evaluate_classification(
+        model, X, y, basic_config, save_path=str(save_file)
+    )
     assert "Accuracy" in result  # still returns metrics
 
 
 def test_round_dict_values_deep_dict():
     input_dict = {
         "outer": {
-            "inner": {
-                "number": 1.23456,
-                "text": "skip",
-                "list": [1.11111, "text"]
-            },
-            "nested": {
-                "float": 9.87654,
-                "none": None
-            }
+            "inner": {"number": 1.23456, "text": "skip", "list": [1.11111, "text"]},
+            "nested": {"float": 9.87654, "none": None},
         }
     }
     rounded = _round_dict_values(input_dict, digits=2)
@@ -291,7 +284,8 @@ def test_round_dict_values_deep_dict():
 
 
 def test_evaluate_classification_json_write_failure(
-        monkeypatch, tmp_path, basic_config):
+    monkeypatch, tmp_path, basic_config
+):
     model = DummyBinaryClassifier()
     X = np.array([[0], [1]])
     y = np.array([0, 1])
@@ -303,8 +297,9 @@ def test_evaluate_classification_json_write_failure(
 
     monkeypatch.setattr("builtins.open", lambda *a, **kw: fail_open())
 
-    result = evaluate_classification(model, X, y, basic_config,
-                                     save_path=str(target_file))
+    result = evaluate_classification(
+        model, X, y, basic_config, save_path=str(target_file)
+    )
     assert "Accuracy" in result  # still returns result despite write failure
 
 
@@ -323,8 +318,9 @@ def test_json_dump_write_failure(monkeypatch, tmp_path, basic_config):
 
     monkeypatch.setattr("builtins.open", failing_open)
 
-    result = evaluate_classification(model, X, y, basic_config,
-                                     save_path=str(save_path))
+    result = evaluate_classification(
+        model, X, y, basic_config, save_path=str(save_path)
+    )
     assert "Accuracy" in result
 
 
@@ -335,12 +331,7 @@ def test_rounding_and_logging_triggered(basic_config, caplog):
     caplog.set_level("INFO")
 
     result = evaluate_classification(
-        model,
-        X,
-        y,
-        basic_config,
-        log_results=True,
-        split_name="validation"
+        model, X, y, basic_config, log_results=True, split_name="validation"
     )
 
     assert "Metrics [validation]" in caplog.text

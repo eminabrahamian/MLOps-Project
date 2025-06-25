@@ -35,8 +35,7 @@ def _setup_logging(level: str = "INFO") -> None:
     )
 
 
-@hydra.main(config_path="../../configs", config_name="config",
-            version_base=None)
+@hydra.main(config_path="../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     """
     Execute the modeling pipeline.
@@ -80,14 +79,14 @@ def main(cfg: DictConfig) -> None:
             else:
                 split_art = wandb_run.use_artifact("processed_data:latest")
                 split_dir = split_art.download(root=tmpdir)
-                train_df = pd.read_excel(os.path.join(split_dir,
-                                                      "train_processed.xlsx"))
-                valid_df = pd.read_excel(os.path.join(split_dir,
-                                                      "valid_processed.xlsx"))
-                test_df = pd.read_excel(os.path.join(split_dir,
-                                                     "test_processed.xlsx"))
-                df = pd.concat([train_df, valid_df, test_df],
-                               ignore_index=True)
+                train_df = pd.read_excel(
+                    os.path.join(split_dir, "train_processed.xlsx")
+                )
+                valid_df = pd.read_excel(
+                    os.path.join(split_dir, "valid_processed.xlsx")
+                )
+                test_df = pd.read_excel(os.path.join(split_dir, "test_processed.xlsx"))
+                df = pd.concat([train_df, valid_df, test_df], ignore_index=True)
 
         if df.empty:
             log.warning("No data found in processed artifact.")
@@ -100,8 +99,8 @@ def main(cfg: DictConfig) -> None:
         # 6) Log artifacts directory if desired
         art_cfg = cfg.get("artifacts", {})
         for name, path in {
-            "preprocessor": Path(PROJECT_ROOT) /
-            Path(art_cfg.get("preprocessing_pipeline")),
+            "preprocessor": Path(PROJECT_ROOT)
+            / Path(art_cfg.get("preprocessing_pipeline")),
             "model": Path(PROJECT_ROOT) / Path(art_cfg.get("model_path")),
         }.items():
             if path:

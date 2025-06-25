@@ -149,8 +149,7 @@ def test_main_train_stage(monkeypatch, tmp_path):
     dummy_df = pd.DataFrame({"a": [1]})
     monkeypatch.setattr("src.legacy_main.load_data", lambda: dummy_df)
     monkeypatch.setattr("src.legacy_main.validate_data", lambda df, cfg: None)
-    monkeypatch.setattr("src.legacy_main.run_model_pipeline",
-                        lambda df, cfg: None)
+    monkeypatch.setattr("src.legacy_main.run_model_pipeline", lambda df, cfg: None)
 
     testargs = ["prog", "--config", str(cfg_file), "--stage", "train"]
     monkeypatch.setattr(sys, "argv", testargs)

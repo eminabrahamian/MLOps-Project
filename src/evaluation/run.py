@@ -68,11 +68,7 @@ def main(cfg: DictConfig) -> None:
 
     # 5) For each split, generate & save metrics
     try:
-        splits = (
-            cfg.evaluation.splits
-            if "splits" in cfg.evaluation
-            else ["validation"]
-        )
+        splits = cfg.evaluation.splits if "splits" in cfg.evaluation else ["validation"]
         metrics_dir = Path(PROJECT_ROOT) / Path(cfg.artifacts.metrics_dir)
         metrics_dir.mkdir(parents=True, exist_ok=True)
 
@@ -92,9 +88,7 @@ def main(cfg: DictConfig) -> None:
                 wandb.save(str(json_path))
                 logger.info("Saved split report to %s", json_path)
             else:
-                logger.warning(
-                    "Expected metrics file not found: %s", json_path
-                )
+                logger.warning("Expected metrics file not found: %s", json_path)
 
             # 6b) Flatten & log numeric metrics to W&B
             flat = {}

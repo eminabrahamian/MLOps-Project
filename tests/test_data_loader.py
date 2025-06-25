@@ -122,12 +122,7 @@ def test_load_data_source_invalid_type(tmp_path):
     path = tmp_path / "valid.xlsx"
     pd.DataFrame({"a": [1]}).to_excel(path, sheet_name="Sheet1", index=False)
 
-    cfg = {
-        "raw_path": str(path),
-        "type": "banana",
-        "header": 0,
-        "sheet_name": "Sheet1"
-    }
+    cfg = {"raw_path": str(path), "type": "banana", "header": 0, "sheet_name": "Sheet1"}
     with pytest.raises(DataLoaderError) as e:
         load_data_source(cfg)
     assert "Unsupported data type" in str(e.value)
@@ -139,9 +134,7 @@ def test_load_data_integration(monkeypatch, temp_excel_config):
     def fake_load_config(path=None):
         return cfg
 
-    monkeypatch.setattr(
-        "src.data_loader.data_loader.load_config", fake_load_config
-    )
+    monkeypatch.setattr("src.data_loader.data_loader.load_config", fake_load_config)
 
     df_loaded = load_data()
     pd.testing.assert_frame_equal(df_loaded, df_expected)

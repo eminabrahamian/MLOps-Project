@@ -33,6 +33,7 @@ def _df_hash(df: pd.DataFrame) -> str:
     raw = pd.util.hash_pandas_object(df, index=True).values
     return hashlib.sha256(raw).hexdigest()
 
+
 # ── Entry point ────────────────────────────────────────────────────────
 
 
@@ -78,19 +79,16 @@ def main(cfg: DictConfig) -> None:
             art = run.use_artifact("new_inference_data:latest")
             with tempfile.TemporaryDirectory() as tmpdir:
                 raw_inference_data_path = art.download(root=tmpdir)
-                df = pd.read_excel(os.path.join(
-                    raw_inference_data_path,
-                    "new_inference_data.xlsx"))
+                df = pd.read_excel(
+                    os.path.join(raw_inference_data_path, "new_inference_data.xlsx")
+                )
                 if df.empty:
-                    logger.warning(
-                        "Loaded DataFrame is empty; skipping validation")
+                    logger.warning("Loaded DataFrame is empty; skipping validation")
                 if df.duplicated().sum() > 0:
                     logger.warning(
-                        "DataFrame contains duplicates;"
-                        " consider deduplication"
+                        "DataFrame contains duplicates;" " consider deduplication"
                     )
-                logger.info("Downloaded inference data: %s",
-                            raw_inference_data_path)
+                logger.info("Downloaded inference data: %s", raw_inference_data_path)
 
         except Exception:
             logger.warning(
@@ -101,18 +99,21 @@ def main(cfg: DictConfig) -> None:
 
         # log input hash and schema
         if input_path.is_file():
-            df_in = pd.read_csv(input_path)\
-                if input_path.suffix == ".csv" else pd.read_excel(input_path)
+            df_in = (
+                pd.read_csv(input_path)
+                if input_path.suffix == ".csv"
+                else pd.read_excel(input_path)
+            )
             wandb.summary["input_data_hash"] = _df_hash(df_in)
             schema = {col: str(dt) for col, dt in df_in.dtypes.items()}
             wandb.summary["input_schema"] = schema
             # record schema file
-            schema_path = (PROJECT_ROOT / "artifacts" /
-                           f"infer_input_schema_{run.id[:8]}.json")
+            schema_path = (
+                PROJECT_ROOT / "artifacts" / f"infer_input_schema_{run.id[:8]}.json"
+            )
             schema_path.parent.mkdir(parents=True, exist_ok=True)
             schema_path.write_text(json.dumps(schema, indent=2))
-            art_schema = wandb.Artifact("inference_input_schema",
-                                        type="schema")
+            art_schema = wandb.Artifact("inference_input_schema", type="schema")
             art_schema.add_file(str(schema_path))
             run.log_artifact(art_schema, aliases=["latest"])
         else:
@@ -131,7 +132,7 @@ def main(cfg: DictConfig) -> None:
             input_path=str(input_path),
             config_path=str(cfg_file),
             output_path=str(output_path),
-            return_proba=cfg.inference.get("return_proba", False)
+            return_proba=cfg.inference.get("return_proba", False),
         )
         wandb.summary["inference_duration_s"] = time.time() - t0
 
@@ -154,8 +155,10 @@ def main(cfg: DictConfig) -> None:
             run.log_artifact(pred_art, aliases=["latest"])
             logger.info("Logged predictions to W&B")
 
-        logger.info("Checking if input artifact logging is enabled: %s",
-                    cfg.inference.get("log_artifacts", True))
+        logger.info(
+            "Checking if input artifact logging is enabled: %s",
+            cfg.inference.get("log_artifacts", True),
+        )
 
         if cfg.inference.get("log_artifacts", True):
             logger.info("Artifact logging is enabled")

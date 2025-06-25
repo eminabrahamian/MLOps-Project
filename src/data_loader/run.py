@@ -22,13 +22,10 @@ import wandb
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(PROJECT_ROOT))
-from src.data_loader.data_loader\
-    import DataLoaderError, load_data, setup_logger
+from src.data_loader.data_loader import DataLoaderError, load_data, setup_logger
 
 
-@hydra.main(
-    config_path="../../configs", config_name="config", version_base=None
-)
+@hydra.main(config_path="../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     """
     Entry point to load the data.
@@ -73,9 +70,7 @@ def main(cfg: DictConfig) -> None:
             job_type="data_load",
             tags=["data_loader", resolved_raw_path.name],
         )
-        logger.info(
-            "Initialized W&B run: %s/%s", cfg.main.wandb.project, run.name
-        )
+        logger.info("Initialized W&B run: %s/%s", cfg.main.wandb.project, run.name)
 
         # 4) Load data using your data_loader pipeline
         df = load_data()
@@ -84,9 +79,7 @@ def main(cfg: DictConfig) -> None:
                 "Loaded DataFrame is empty." " Check your data source."
             )
         n_rows, n_cols = df.shape
-        logger.info(
-            "Data loaded successfully: %d rows, %d cols", n_rows, n_cols
-        )
+        logger.info("Data loaded successfully: %d rows, %d cols", n_rows, n_cols)
 
         duplicate_count = df.duplicated().sum()
         if duplicate_count > 0:
@@ -98,9 +91,7 @@ def main(cfg: DictConfig) -> None:
 
         # 5) Log basic metrics
         if run:
-            wandb.log(
-                {"n_rows": n_rows, "n_cols": n_cols, "shape": list(df.shape)}
-            )
+            wandb.log({"n_rows": n_rows, "n_cols": n_cols, "shape": list(df.shape)})
 
         # 6) Optionally log a sample of the data
         if cfg.data_load.get("log_sample", True) and run:

@@ -62,9 +62,7 @@ def setup_logger(cfg: Dict[str, Any]) -> None:
     level_name = log_cfg.get("level", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
     log_file = log_cfg.get("log_file", "logs/inference.log")
-    fmt = log_cfg.get(
-        "format", "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    )
+    fmt = log_cfg.get("format", "%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     datefmt = log_cfg.get("datefmt", None)
 
     # Ensure log directory exists
@@ -294,20 +292,17 @@ def run_inference(
 
         # 2) Load artifacts
         artifacts = cfg.get("artifacts", {})
-        pipeline_path = (Path(PROJECT_ROOT) /
-                         artifacts.get("preprocessing_pipeline"))
-        model_path = (Path(PROJECT_ROOT) /
-                      artifacts.get("model_path")) or cfg.get("model", {}).get(
-            "save_path"
-        )
+        pipeline_path = Path(PROJECT_ROOT) / artifacts.get("preprocessing_pipeline")
+        model_path = (Path(PROJECT_ROOT) / artifacts.get("model_path")) or cfg.get(
+            "model", {}
+        ).get("save_path")
         if not pipeline_path:
             raise InferenceError(
                 "Missing 'artifacts.preprocessing_pipeline'" " in config"
             )
         if not model_path:
             raise InferenceError(
-                "Missing 'artifacts.model_path'"
-                " (or 'model.save_path') in config"
+                "Missing 'artifacts.model_path'" " (or 'model.save_path') in config"
             )
 
         pipeline = load_pipeline(pipeline_path)
@@ -355,16 +350,10 @@ def main() -> None:
         without manual coding, enabling reproducible and auditable
         model scoring.
     """
-    parser = argparse.ArgumentParser(
-        description="Run batch inference on new data"
-    )
-    parser.add_argument(
-        "input_file", help="Path to raw input data (CSV or Excel)"
-    )
+    parser = argparse.ArgumentParser(description="Run batch inference on new data")
+    parser.add_argument("input_file", help="Path to raw input data (CSV or Excel)")
     parser.add_argument("config_yaml", help="Path to config.yaml")
-    parser.add_argument(
-        "output_file", help="Path to save output predictions (Excel)"
-    )
+    parser.add_argument("output_file", help="Path to save output predictions (Excel)")
     parser.add_argument(
         "--proba",
         action="store_true",
@@ -408,8 +397,7 @@ def run_inference_df(
     try:
         # 1. Load preprocessing pipeline and model
         artifacts = config.get("artifacts", {})
-        pipeline_path = (Path(PROJECT_ROOT) /
-                         artifacts.get("preprocessing_pipeline"))
+        pipeline_path = Path(PROJECT_ROOT) / artifacts.get("preprocessing_pipeline")
         model_path = Path(PROJECT_ROOT) / artifacts.get("model_path")
 
         pipeline = load_pipeline(pipeline_path)
@@ -417,8 +405,7 @@ def run_inference_df(
 
         # 2. Extract required features
         required_feats = config.get("original_features", [])
-        missing = [feat for feat in required_feats
-                   if feat not in raw_df.columns]
+        missing = [feat for feat in required_feats if feat not in raw_df.columns]
         if missing:
             raise ValueError(f"Missing required input features: {missing}")
 

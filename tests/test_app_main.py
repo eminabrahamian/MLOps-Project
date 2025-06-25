@@ -20,11 +20,11 @@ CI = os.getenv("CI", "false").lower() == "true"
 PIPELINE_EXISTS = os.path.exists("models/preprocessing_pipeline.pkl")
 
 pytestmark = pytest.mark.skipif(
-    CI and not PIPELINE_EXISTS,
-    reason="Pipeline file missing in CI environment"
+    CI and not PIPELINE_EXISTS, reason="Pipeline file missing in CI environment"
 )
 
 import app.main  # delayed until after skipif
+
 client = TestClient(app.main.app)
 
 EXAMPLE_INPUT = {
@@ -57,15 +57,14 @@ EXAMPLE_INPUT = {
     "worst_concavity": 0.7119,
     "worst_concave_points": 0.2654,
     "worst_symmetry": 0.4601,
-    "worst_fractal_dimension": 0.1189
+    "worst_fractal_dimension": 0.1189,
 }
 
 
 def test_root():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message":
-                               "Welcome to the Breast Cancer Prediction API"}
+    assert response.json() == {"message": "Welcome to the Breast Cancer Prediction API"}
 
 
 def test_health():

@@ -91,9 +91,7 @@ def save_artifact(obj: Any, path: str) -> None:
         raise
 
 
-def format_metrics(
-    metrics: Dict[str, Any], ndigits: int = 3
-) -> Dict[str, Any]:
+def format_metrics(metrics: Dict[str, Any], ndigits: int = 3) -> Dict[str, Any]:
     """
     Round numeric metric values for cleaner logging.
 
@@ -169,9 +167,7 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     )
 
     # Save raw splits to Excel
-    splits_dir = Path(
-        config.get("artifacts", {}).get("splits_dir", "data/splits")
-    )
+    splits_dir = Path(config.get("artifacts", {}).get("splits_dir", "data/splits"))
     root_splits_dir = Path(PROJECT_ROOT) / Path(splits_dir)
     root_splits_dir.mkdir(parents=True, exist_ok=True)
     pd.concat([X_train, y_train.rename(target_col)], axis=1).to_excel(
@@ -198,9 +194,7 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     X_test_proc = preprocessor.transform(X_test)
 
     # Determine output feature names after transformation
-    feature_names = get_output_feature_names(
-        preprocessor, raw_features, config
-    )
+    feature_names = get_output_feature_names(preprocessor, raw_features, config)
 
     # Convert to DataFrame (engineered features)
     df_train_proc = pd.DataFrame(X_train_proc, columns=feature_names)
@@ -220,12 +214,9 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
     root_processed_dir = Path(PROJECT_ROOT) / Path(processed_dir)
 
     root_processed_dir.mkdir(parents=True, exist_ok=True)
-    df_train_proc.to_excel(root_processed_dir / "train_processed.xlsx",
-                           index=False)
-    df_valid_proc.to_excel(root_processed_dir / "valid_processed.xlsx",
-                           index=False)
-    df_test_proc.to_excel(root_processed_dir / "test_processed.xlsx",
-                          index=False)
+    df_train_proc.to_excel(root_processed_dir / "train_processed.xlsx", index=False)
+    df_valid_proc.to_excel(root_processed_dir / "valid_processed.xlsx", index=False)
+    df_test_proc.to_excel(root_processed_dir / "test_processed.xlsx", index=False)
     logger.info("Saved processed splits: train, valid, test")
 
     # 3. Train model using config["model"]
@@ -283,6 +274,4 @@ def run_model_pipeline(df: pd.DataFrame, config: Dict[str, Any]) -> None:
         "Validation metrics: %s",
         json.dumps(format_metrics(valid_metrics), indent=2),
     )
-    logger.info(
-        "Test metrics: %s", json.dumps(format_metrics(test_metrics), indent=2)
-    )
+    logger.info("Test metrics: %s", json.dumps(format_metrics(test_metrics), indent=2))

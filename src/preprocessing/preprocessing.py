@@ -87,9 +87,7 @@ def build_preprocessing_pipeline(config: Dict) -> Pipeline:
 
     # 1) RiskScore transformer
     if pp_cfg.get("risk_score", False):
-        steps.append(
-            ("risk_score", RiskScore(pp_cfg.get("icd10_chapter_flags", [])))
-        )
+        steps.append(("risk_score", RiskScore(pp_cfg.get("icd10_chapter_flags", []))))
 
     # 2) Optional feature transformers
     if pp_cfg.get("weight_col", False) and pp_cfg.get("height_col", False):
@@ -165,9 +163,7 @@ def build_preprocessing_pipeline(config: Dict) -> Pipeline:
             cat_steps.append(
                 (
                     "encoder",
-                    OneHotEncoder(
-                        sparse_output=False, handle_unknown="ignore"
-                    ),
+                    OneHotEncoder(sparse_output=False, handle_unknown="ignore"),
                 )
             )
         elif encoding == "ordinal":
@@ -186,9 +182,7 @@ def build_preprocessing_pipeline(config: Dict) -> Pipeline:
     handled = set(continuous + categorical)
     raw_feats: List[str] = config.get("raw_features", [])
     passthrough = [
-        rename_map.get(r, r)
-        for r in raw_feats
-        if rename_map.get(r, r) not in handled
+        rename_map.get(r, r) for r in raw_feats if rename_map.get(r, r) not in handled
     ]
     if passthrough:
         transformers.append(("passthrough", "passthrough", passthrough))
@@ -216,9 +210,7 @@ def get_output_feature_names(
         model training, feature importance, and interpretability.
     """
     feature_names: List[str] = []
-    col_transform: ColumnTransformer = preprocessor.named_steps[
-        "col_transform"
-    ]
+    col_transform: ColumnTransformer = preprocessor.named_steps["col_transform"]
 
     for _, transformer, cols in col_transform.transformers_:
         if transformer == "drop":
@@ -316,9 +308,7 @@ if __name__ == "__main__":
 
         # 3. Apply preprocessing pipeline
         df_processed = run_preprocessing_pipeline(df_raw, config)
-        logger.info(
-            "Preprocessing complete; processed shape: %s", df_processed.shape
-        )
+        logger.info("Preprocessing complete; processed shape: %s", df_processed.shape)
 
         # 4. Ensure output directory exists: data/processed/
         project_root = Path(__file__).resolve().parents[2]

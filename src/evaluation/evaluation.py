@@ -55,9 +55,7 @@ def _npv(tn: int, fn: int) -> float:
     return tn / denom if denom else float("nan")
 
 
-def _round_dict_values(
-    metrics: Dict[str, Any], digits: int = 3
-) -> Dict[str, Any]:
+def _round_dict_values(metrics: Dict[str, Any], digits: int = 3) -> Dict[str, Any]:
     """
     Recursively round any float values in a nested metrics dict.
 
@@ -189,21 +187,14 @@ def evaluate_classification(
             )
 
         elif name == "Recall":
-            results["Recall"] = float(
-                recall_score(y_true, y_pred, zero_division=0)
-            )
+            results["Recall"] = float(recall_score(y_true, y_pred, zero_division=0))
 
         elif name == "F1 Score":
-            results["F1 Score"] = float(
-                f1_score(y_true, y_pred, zero_division=0)
-            )
+            results["F1 Score"] = float(f1_score(y_true, y_pred, zero_division=0))
 
         elif name == "ROC AUC":
             try:
-                if (
-                    hasattr(model, "predict_proba")
-                    and len(np.unique(y_true)) == 2
-                ):
+                if hasattr(model, "predict_proba") and len(np.unique(y_true)) == 2:
                     proba = model.predict_proba(X)[:, 1]
                     results["ROC AUC"] = float(roc_auc_score(y_true, proba))
                 else:
@@ -228,9 +219,7 @@ def evaluate_classification(
     # 4) Optionally log the results
     if log_results and split_name:
         rounded = _round_dict_values(results)
-        logger.info(
-            "Metrics [%s]: %s", split_name, json.dumps(rounded, indent=2)
-        )
+        logger.info("Metrics [%s]: %s", split_name, json.dumps(rounded, indent=2))
 
     # 5) Optionally save to JSON
     if save_path:
@@ -290,15 +279,18 @@ def generate_split_report(
 
     # Safe fallbacks with proper type conversion
     processed_dir = PROJECT_ROOT / (
-        Path(processed_dir) if processed_dir is not None else
-        Path(cfg_art.get("processed_dir", "data/processed"))
+        Path(processed_dir)
+        if processed_dir is not None
+        else Path(cfg_art.get("processed_dir", "data/processed"))
     )
     model_path = PROJECT_ROOT / (
-        Path(model_path) if model_path is not None
+        Path(model_path)
+        if model_path is not None
         else Path(cfg_art.get("model_path", "models/model.pkl"))
     )
     metrics_dir = PROJECT_ROOT / (
-        Path(save_path) if save_path is not None
+        Path(save_path)
+        if save_path is not None
         else Path(cfg_art.get("metrics_dir", "models"))
     )
     target_col = config.get("target")
@@ -312,8 +304,7 @@ def generate_split_report(
 
     df_split = pd.read_excel(split_file)
     if target_col not in df_split.columns:
-        logger.error("Target column '%s' missing in %s",
-                     target_col, split_file)
+        logger.error("Target column '%s' missing in %s", target_col, split_file)
         return report
 
     X = df_split.drop(columns=[target_col]).values

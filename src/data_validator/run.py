@@ -142,9 +142,7 @@ def main(cfg: DictConfig) -> None:
             job_type="data_validator",
             tags=["data_validator"],
         )
-        logger.info(
-            "Initialized W&B run: %s/%s", cfg.main.wandb.project, run.name
-        )
+        logger.info("Initialized W&B run: %s/%s", cfg.main.wandb.project, run.name)
 
         # 4. Fetch raw data artifact from W&B
         raw_art = run.use_artifact("raw_data:latest")
@@ -154,9 +152,7 @@ def main(cfg: DictConfig) -> None:
         if df.empty:
             logger.warning("Loaded DataFrame is empty; skipping validation")
         if df.duplicated().sum() > 0:
-            logger.warning(
-                "DataFrame contains duplicates;" " consider deduplication"
-            )
+            logger.warning("DataFrame contains duplicates;" " consider deduplication")
         logger.info("Downloaded raw data: %s", raw_data_path)
 
         # 5. Run validation
@@ -193,9 +189,7 @@ def main(cfg: DictConfig) -> None:
             import json
 
             report = json.loads(abs_report.read_text())
-            wandb.summary["validation_status"] = report.get(
-                "status", "unknown"
-            )
+            wandb.summary["validation_status"] = report.get("status", "unknown")
             wandb.summary["num_errors"] = len(report.get("errors", []))
             wandb.summary["num_warnings"] = len(report.get("warnings", []))
 
