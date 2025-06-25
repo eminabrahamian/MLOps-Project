@@ -20,10 +20,6 @@ COPY models ./models
 COPY main.py ./
 COPY MLproject ./
 COPY scripts ./scripts
-#COPY conda.yml ./
-#COPY setup.sh ./
-#COPY .env ./
-#COPY data.dvc ./
 
 # Create necessary directories
 RUN mkdir -p data logs artifacts
