@@ -38,9 +38,6 @@ ENV/
 logs/
 *.log
 
-# Model files
-*.pkl
-
 # Data files
 data/
 
